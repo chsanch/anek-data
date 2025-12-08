@@ -16,7 +16,7 @@ Templates requiring updates:
 Follow-up TODOs: None
 -->
 
-# ANEC Data - FX Analytics Dashboard Constitution
+# ANEK Data - FX Analytics Dashboard Constitution
 
 ## Core Principles
 
@@ -119,7 +119,7 @@ src/
 
 ## Governance
 
-This constitution defines non-negotiable standards for the ANEC Data project. All implementation decisions, code reviews, and architectural changes MUST align with these principles.
+This constitution defines non-negotiable standards for the ANEK Data project. All implementation decisions, code reviews, and architectural changes MUST align with these principles.
 
 ### Amendment Process
 

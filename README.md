@@ -1,38 +1,38 @@
-# sv
+# ANEK Data
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+FX Analytics Dashboard built with Svelte 5, SvelteKit, and DuckDB WASM.
 
-## Creating a project
+## Quick Start
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+```bash
+pnpm install
+pnpm dev
 ```
 
-## Developing
+## Setup
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+1. Copy `.env.example` to `.env`
+2. Configure `PUBLIC_PARQUET_URL` with your parquet file URL
 
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+For local testing, serve a parquet file:
+```bash
+python3 -m http.server 8888 --directory /path/to/parquet/files
 ```
 
-## Building
+## Scripts
 
-To create a production version of your app:
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start dev server |
+| `pnpm build` | Build for production |
+| `pnpm check` | TypeScript check |
+| `pnpm lint` | Lint code |
+| `pnpm format` | Format code |
+| `pnpm test:unit` | Run tests |
 
-```sh
-npm run build
-```
+## Tech Stack
 
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- Svelte 5 + SvelteKit
+- TypeScript
+- Tailwind CSS 4
+- DuckDB WASM
