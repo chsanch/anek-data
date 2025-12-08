@@ -37,10 +37,10 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Create cache type definitions in src/lib/db/cache-types.ts (CachedParquet, CacheMetadata, CacheStatus, CacheConfig, CacheState, LoadResult interfaces)
-- [ ] T004 Create ParquetCacheService class skeleton in src/lib/db/cache.ts with init(), isCacheValid(), getMetadata(), loadData(), clearCache(), clearAllCache(), getStatus() methods
-- [ ] T005 Implement IndexedDB schema and database initialization in src/lib/db/cache.ts using idb openDB with ParquetCacheDB schema
-- [ ] T006 Update src/lib/db/context.ts to add cacheStatus to DataContext interface and DATA_PROVIDER_KEY
+- [x] T003 Create cache type definitions in src/lib/db/cache-types.ts (CachedParquet, CacheMetadata, CacheStatus, CacheConfig, CacheState, LoadResult interfaces)
+- [x] T004 Create ParquetCacheService class skeleton in src/lib/db/cache.ts with init(), isCacheValid(), getMetadata(), loadData(), clearCache(), clearAllCache(), getStatus() methods
+- [x] T005 Implement IndexedDB schema and database initialization in src/lib/db/cache.ts using idb openDB with ParquetCacheDB schema
+- [x] T006 Update src/lib/db/context.ts to add cacheStatus to DataContext interface and DATA_PROVIDER_KEY
 
 **Checkpoint**: Foundation ready - cache service structure exists, user story implementation can begin
 

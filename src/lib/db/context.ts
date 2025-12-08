@@ -1,11 +1,14 @@
 import { getContext } from 'svelte';
 import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
 import type { DataState } from './types';
+import type { CacheStatus } from './cache-types';
 
 export interface DataProviderContext {
 	readonly db: AsyncDuckDB | null;
 	readonly state: DataState;
+	readonly cacheStatus: CacheStatus;
 	refresh: () => Promise<void>;
+	forceRefresh: () => Promise<void>;
 }
 
 const CONTEXT_KEY = 'data-provider';
