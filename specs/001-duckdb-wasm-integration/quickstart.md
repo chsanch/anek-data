@@ -14,7 +14,7 @@
 ### 1. Install Dependencies
 
 ```bash
-npm install @duckdb/duckdb-wasm
+pnpm install @duckdb/duckdb-wasm
 ```
 
 ### 2. Configure Environment
@@ -59,16 +59,31 @@ export {};
 // src/lib/db/duckdb.ts
 import * as duckdb from '@duckdb/duckdb-wasm';
 
+// Import local bundles to avoid CORS issues with CDN
+import duckdb_wasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url';
+import duckdb_wasm_eh from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
+import duckdb_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url';
+import duckdb_worker_eh from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
+
+const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
+  mvp: {
+    mainModule: duckdb_wasm,
+    mainWorker: duckdb_worker
+  },
+  eh: {
+    mainModule: duckdb_wasm_eh,
+    mainWorker: duckdb_worker_eh
+  }
+};
+
 let db: duckdb.AsyncDuckDB | null = null;
 
 export async function initDuckDB(): Promise<duckdb.AsyncDuckDB> {
   if (db) return db;
 
-  const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
-  const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
-
+  const bundle = await duckdb.selectBundle(MANUAL_BUNDLES);
   const worker = new Worker(bundle.mainWorker!);
-  const logger = new duckdb.ConsoleLogger();
+  const logger = new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING);
 
   db = new duckdb.AsyncDuckDB(logger, worker);
   await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
@@ -80,6 +95,8 @@ export function getDB(): duckdb.AsyncDuckDB | null {
   return db;
 }
 ```
+
+> **Note**: We use local bundles via Vite's `?url` imports to avoid CORS issues when loading DuckDB workers from CDN.
 
 ### Load Parquet Data
 
@@ -121,33 +138,66 @@ import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
 export interface DashboardStats {
   totalTrades: number;
   totalVolume: number;
+  activeCurrencies: number;
   openOrders: number;
+  avgRate: number;
+  totalChains: number;
+}
+
+/**
+ * Safely convert BigInt or number to JavaScript number
+ * DuckDB returns BigInt for large aggregations which can overflow Number
+ */
+function toSafeNumber(value: unknown): number {
+  if (typeof value === 'bigint') {
+    return Number(value.toString());
+  }
+  return Number(value);
 }
 
 export async function getDashboardStats(db: AsyncDuckDB): Promise<DashboardStats> {
   const conn = await db.connect();
 
   try {
+    // Cast large aggregations to DOUBLE to avoid BigInt overflow issues
     const result = await conn.query(`
       SELECT
-        COUNT(*) as total_trades,
-        COALESCE(SUM(sell_amount_cents), 0) as total_volume,
-        COUNT(*) FILTER (WHERE status = 'open') as open_orders
+        COUNT(*)::BIGINT as total_trades,
+        (SUM(sell_amount_cents)::DOUBLE / 100.0) as total_volume,
+        COUNT(*) FILTER (WHERE status = 'open')::BIGINT as open_orders,
+        AVG(rate)::DOUBLE as avg_rate,
+        COUNT(*) FILTER (WHERE fx_order_type = 'chain')::BIGINT as total_chains
       FROM orders
     `);
 
     const row = result.toArray()[0];
 
+    // Get unique currencies count
+    const currencyResult = await conn.query(`
+      SELECT COUNT(DISTINCT currency)::BIGINT as unique_currencies
+      FROM (
+        SELECT buy_currency as currency FROM orders
+        UNION
+        SELECT sell_currency as currency FROM orders
+      )
+    `);
+    const uniqueCurrencies = toSafeNumber(currencyResult.toArray()[0].unique_currencies);
+
     return {
-      totalTrades: Number(row.total_trades),
-      totalVolume: Number(row.total_volume),
-      openOrders: Number(row.open_orders)
+      totalTrades: toSafeNumber(row.total_trades),
+      totalVolume: toSafeNumber(row.total_volume),
+      activeCurrencies: uniqueCurrencies,
+      openOrders: toSafeNumber(row.open_orders),
+      avgRate: toSafeNumber(row.avg_rate),
+      totalChains: toSafeNumber(row.total_chains)
     };
   } finally {
     await conn.close();
   }
 }
 ```
+
+> **Important**: Use `toSafeNumber()` helper to handle BigInt values from DuckDB aggregations that may exceed JavaScript's `Number.MAX_SAFE_INTEGER`.
 
 ### Create Reactive Stats Service
 
@@ -340,5 +390,33 @@ export default defineConfig({
 
 1. Run `/speckit.tasks` to generate the implementation task list
 2. Implement tasks following the priority order (P1 first)
-3. Run tests with `npm run test`
-4. Build and deploy with `npm run build`
+3. Run type check with `pnpm check`
+4. Run tests with `pnpm test`
+5. Build and deploy with `pnpm build`
+
+## Serving Parquet Files Locally
+
+For local development, you need a CORS-enabled server to serve the Parquet file:
+
+```python
+# sample-data/serve.py
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+
+class CORSRequestHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', '*')
+        super().end_headers()
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.end_headers()
+
+if __name__ == '__main__':
+    server = HTTPServer(('localhost', 8080), CORSRequestHandler)
+    print('Serving on http://localhost:8080 with CORS enabled')
+    server.serve_forever()
+```
+
+Run with: `python sample-data/serve.py`

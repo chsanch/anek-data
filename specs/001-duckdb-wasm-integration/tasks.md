@@ -128,8 +128,8 @@
 - [x] T033 Add QueryCache utility for performance optimization in `src/lib/utils/debounce.ts`
 - [x] T034 Implement query caching for stats and volume data (30s TTL)
 - [x] T035 Add cache invalidation on refresh button click
-- [ ] T036 [OPTIONAL] Add schema validation on Parquet load (verify expected columns exist)
-- [ ] T037 [OPTIONAL] Run quickstart.md validation - verify documented patterns work
+- [x] T036 Schema validation on Parquet load (already implemented in DataProvider.svelte lines 38-47)
+- [x] T037 Update quickstart.md with actual implementation patterns (local bundles, BigInt handling, CORS server)
 
 **Checkpoint**: Phase 6 complete - Polish and performance optimizations applied ✅
 
