@@ -2,10 +2,52 @@
 	import StatCard from '$lib/components/StatCard.svelte';
 	import OrdersTable from '$lib/components/OrdersTable.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+	import RefreshButton from '$lib/components/RefreshButton.svelte';
+	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
+	import ErrorMessage from '$lib/components/ErrorMessage.svelte';
 	import { formatCompact } from '$lib/utils/format';
+	import { getDataContext } from '$lib/db/context';
+	import { getPaginatedOrders, getTotalOrderCount } from '$lib/db/queries';
 	import type { UnifiedOrder } from '$lib/types/orders';
 
-	// Mock data based on the data structure proposal
+	// Get data context from DataProvider
+	const dataContext = getDataContext();
+
+	// Orders state
+	let orders: UnifiedOrder[] = $state([]);
+	let totalOrders = $state(0);
+	let ordersLoading = $state(false);
+
+	// Load orders when data is initialized
+	$effect(() => {
+		if (dataContext.state.initialized && dataContext.db) {
+			loadOrders();
+		}
+	});
+
+	async function loadOrders() {
+		if (!dataContext.db) return;
+
+		ordersLoading = true;
+		try {
+			const [fetchedOrders, count] = await Promise.all([
+				getPaginatedOrders(dataContext.db, 20, 0),
+				getTotalOrderCount(dataContext.db)
+			]);
+			orders = fetchedOrders;
+			totalOrders = count;
+		} catch (e) {
+			console.error('Failed to load orders:', e);
+		} finally {
+			ordersLoading = false;
+		}
+	}
+
+	async function handleRefresh() {
+		await dataContext.refresh();
+	}
+
+	// Mock data based on the data structure proposal (will be replaced with real stats in US2)
 	const stats = $state({
 		totalTrades: 18_432,
 		totalVolume: 2_847_392_150,
@@ -22,41 +64,6 @@
 		{ currency: 'GBP', volume: 234_567_890, change: -1.5 },
 		{ currency: 'DKK', volume: 123_456_789, change: 5.3 }
 	]);
-
-	// Mock orders data
-	const mockOrders: UnifiedOrder[] = $state(
-		Array.from({ length: 100 }, (_, i) => ({
-			id: `K-${String(10000 + i).padStart(6, '0')}`,
-			reference: `K-${String(10000 + i).padStart(6, '0')}`,
-			fxOrderType: ['forward', 'chain', 'spot'][Math.floor(Math.random() * 3)] as
-				| 'forward'
-				| 'chain'
-				| 'spot',
-			marketDirection: Math.random() > 0.5 ? 'buy' : 'sell',
-			buyAmountCents: Math.floor(Math.random() * 10000000) + 100000,
-			sellAmountCents: Math.floor(Math.random() * 10000000) + 100000,
-			buyCurrency: ['EUR', 'USD', 'CHF', 'GBP'][Math.floor(Math.random() * 4)],
-			sellCurrency: ['EUR', 'USD', 'CHF', 'GBP'][Math.floor(Math.random() * 4)],
-			rate: 1 + Math.random() * 0.3,
-			valueDate: new Date(Date.now() + Math.random() * 90 * 24 * 60 * 60 * 1000)
-				.toISOString()
-				.split('T')[0],
-			creationDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-				.toISOString()
-				.split('T')[0],
-			executionDate:
-				Math.random() > 0.3
-					? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000)
-							.toISOString()
-							.split('T')[0]
-					: null,
-			status: ['open', 'closed_to_trading', 'completed'][Math.floor(Math.random() * 3)] as
-				| 'open'
-				| 'closed_to_trading'
-				| 'completed',
-			liquidityProvider: ['SIVB', 'BARC', 'CITI', 'JPMC'][Math.floor(Math.random() * 4)]
-		}))
-	);
 
 </script>
 
@@ -154,6 +161,10 @@
 			<div class="section-header">
 				<h2 class="section-title">Unified Orders</h2>
 				<div class="section-actions">
+					<RefreshButton
+						onclick={handleRefresh}
+						loading={dataContext.state.loading}
+					/>
 					<button class="btn-filter">
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 							<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
@@ -163,7 +174,17 @@
 					<button class="btn-export">Export</button>
 				</div>
 			</div>
-			<OrdersTable orders={mockOrders} />
+			{#if dataContext.state.loading && !dataContext.state.initialized}
+				<div class="orders-loading">
+					<LoadingIndicator message="Loading orders from parquet file..." />
+				</div>
+			{:else if dataContext.state.error}
+				<div class="orders-error">
+					<ErrorMessage error={dataContext.state.error} onRetry={handleRefresh} />
+				</div>
+			{:else}
+				<OrdersTable orders={orders} />
+			{/if}
 		</section>
 	</main>
 </div>
@@ -465,5 +486,14 @@
 		background: var(--accent-primary-hover);
 		border-color: var(--accent-primary-hover);
 		color: var(--bg-primary);
+	}
+
+	.orders-loading,
+	.orders-error {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 48px 24px;
 	}
 </style>
