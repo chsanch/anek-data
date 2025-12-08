@@ -133,23 +133,25 @@
 
 ---
 
-## Phase 7: User Story 5 - Export Filtered Results (Priority: P5)
+## Phase 7: User Story 5 - Export Filtered Results (Priority: P5) ✅ COMPLETE
 
 **Goal**: Users can export currently filtered/sorted view as CSV
 
 **Independent Test**: Apply filters → click Export → CSV contains only filtered rows in current sort order
 
+**Implementation Note**: Extended `ExportOptions` to include a `'filtered'` type that carries the current search/filter/sort state. The export function uses the same SQL query building logic as the table display, ensuring the exported data matches exactly what the user sees.
+
 ### Implementation for User Story 5
 
-- [ ] T033 [US5] Add getFilteredRowModel().rows access to get filtered order IDs in src/lib/components/OrdersTable.svelte
-- [ ] T034 [US5] Extend ExportOptions interface to include 'filtered' type and orderIds array in src/lib/db/queries.ts
-- [ ] T035 [US5] Add exportFilteredOrders function that exports specific order IDs in current order in src/lib/db/queries.ts
-- [ ] T036 [US5] Update ExportModal to show "Export filtered results (X rows)" option when filters active in src/lib/components/ExportModal.svelte
-- [ ] T037 [US5] Pass filtered row count and IDs from OrdersTable to ExportModal in src/lib/components/OrdersTable.svelte
-- [ ] T038 [US5] Update +page.svelte handleExport to handle filtered export option at src/routes/+page.svelte
-- [ ] T039 [US5] Preserve existing export behavior (all/date-range) when no filters active in src/lib/components/ExportModal.svelte
+- [x] T033 [US5] Extended ExportOptions interface to include 'filtered' type with referenceSearch, columnFilters, and sortConfig in src/lib/db/queries.ts
+- [x] T034 [US5] Updated getExportOrderCount to support filtered count using buildWhereConditions helper
+- [x] T035 [US5] Updated exportOrdersToCsv to support filtered exports with current filters and sort order
+- [x] T036 [US5] Updated ExportModal to show "Export current view" option with row count badge when filters active
+- [x] T037 [US5] Pass filteredCount, hasActiveFilters, referenceSearch, columnFilters, sortConfig from +page.svelte to ExportModal
+- [x] T038 [US5] ExportModal handleExport now includes filter/sort state when type is 'filtered'
+- [x] T039 [US5] Preserved existing export behavior (all/date-range) - filtered option only shown when hasActiveFilters is true
 
-**Checkpoint**: Filtered export functional, preserves existing export options
+**Checkpoint**: Filtered export functional, preserves existing export options ✅
 
 ---
 

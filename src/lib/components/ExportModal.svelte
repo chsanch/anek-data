@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Modal from './Modal.svelte';
+	import type { ColumnFilters, SortConfig } from '$lib/db/queries';
 
 	interface Props {
 		open: boolean;
@@ -8,17 +9,39 @@
 		ongetcount: (options: ExportOptions) => Promise<number>;
 		exporting?: boolean;
 		totalOrders?: number;
+		// For filtered export
+		filteredCount?: number;
+		hasActiveFilters?: boolean;
+		referenceSearch?: string;
+		columnFilters?: ColumnFilters;
+		sortConfig?: SortConfig;
 	}
 
 	export interface ExportOptions {
-		type: 'all' | 'date-range';
+		type: 'all' | 'date-range' | 'filtered';
 		startDate?: string;
 		endDate?: string;
+		// For filtered exports
+		referenceSearch?: string;
+		columnFilters?: ColumnFilters;
+		sortConfig?: SortConfig;
 	}
 
-	let { open, onclose, onexport, ongetcount, exporting = false, totalOrders = 0 }: Props = $props();
+	let {
+		open,
+		onclose,
+		onexport,
+		ongetcount,
+		exporting = false,
+		totalOrders = 0,
+		filteredCount = 0,
+		hasActiveFilters = false,
+		referenceSearch = '',
+		columnFilters = {},
+		sortConfig
+	}: Props = $props();
 
-	let exportType = $state<'all' | 'date-range'>('all');
+	let exportType = $state<'all' | 'date-range' | 'filtered'>('all');
 	let startDate = $state('');
 	let endDate = $state('');
 	let previewCount = $state<number | null>(null);
@@ -36,11 +59,20 @@
 		}
 	});
 
+	// Default to filtered export if filters are active when modal opens
+	$effect(() => {
+		if (open && hasActiveFilters) {
+			exportType = 'filtered';
+		}
+	});
+
 	// Reset preview count when modal opens or export type changes
 	$effect(() => {
 		if (open) {
 			if (exportType === 'all') {
 				previewCount = totalOrders;
+			} else if (exportType === 'filtered') {
+				previewCount = filteredCount;
 			} else {
 				previewCount = null;
 			}
@@ -82,13 +114,19 @@
 		if (exportType === 'date-range') {
 			options.startDate = startDate;
 			options.endDate = endDate;
+		} else if (exportType === 'filtered') {
+			options.referenceSearch = referenceSearch;
+			options.columnFilters = columnFilters;
+			options.sortConfig = sortConfig;
 		}
 
 		onexport(options);
 	}
 
 	let isValid = $derived(
-		exportType === 'all' || (startDate && endDate && startDate <= endDate)
+		exportType === 'all' ||
+		exportType === 'filtered' ||
+		(exportType === 'date-range' && startDate && endDate && startDate <= endDate)
 	);
 </script>
 
@@ -99,6 +137,24 @@
 		</p>
 
 		<div class="option-group">
+			{#if hasActiveFilters}
+				<label class="radio-option highlighted">
+					<input
+						type="radio"
+						name="export-type"
+						value="filtered"
+						bind:group={exportType}
+					/>
+					<span class="radio-label">
+						<span class="radio-title">
+							Export current view
+							<span class="filtered-badge">{filteredCount.toLocaleString()} rows</span>
+						</span>
+						<span class="radio-description">Export orders matching your current filters and sort order</span>
+					</span>
+				</label>
+			{/if}
+
 			<label class="radio-option">
 				<input
 					type="radio"
@@ -108,7 +164,7 @@
 				/>
 				<span class="radio-label">
 					<span class="radio-title">Export all orders</span>
-					<span class="radio-description">Download all orders in the database</span>
+					<span class="radio-description">Download all {totalOrders.toLocaleString()} orders in the database</span>
 				</span>
 			</label>
 
@@ -248,9 +304,28 @@
 	}
 
 	.radio-title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 		font-size: 14px;
 		font-weight: 500;
 		color: var(--text-primary);
+	}
+
+	.filtered-badge {
+		display: inline-flex;
+		padding: 2px 6px;
+		font-size: 11px;
+		font-weight: 600;
+		font-family: 'IBM Plex Mono', monospace;
+		color: var(--accent-primary);
+		background: var(--accent-primary-bg);
+		border-radius: 2px;
+	}
+
+	.radio-option.highlighted {
+		border-color: var(--accent-primary);
+		background: var(--accent-primary-muted);
 	}
 
 	.radio-description {

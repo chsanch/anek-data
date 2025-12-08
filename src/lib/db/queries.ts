@@ -5,9 +5,13 @@ import type { UnifiedOrder } from '$lib/types/orders';
  * Export options for CSV download
  */
 export interface ExportOptions {
-	type: 'all' | 'date-range';
+	type: 'all' | 'date-range' | 'filtered';
 	startDate?: string;
 	endDate?: string;
+	// For filtered exports
+	referenceSearch?: string;
+	columnFilters?: ColumnFilters;
+	sortConfig?: SortConfig;
 }
 
 /**
@@ -406,8 +410,13 @@ export async function getExportOrderCount(
 	const conn = await db.connect();
 	try {
 		let whereClause = '';
+
 		if (options.type === 'date-range' && options.startDate && options.endDate) {
 			whereClause = `WHERE creation_date >= DATE '${options.startDate}' AND creation_date <= DATE '${options.endDate}'`;
+		} else if (options.type === 'filtered') {
+			// Use the same filter logic as getPaginatedOrders
+			const conditions = buildWhereConditions(options.referenceSearch, options.columnFilters);
+			whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 		}
 
 		const result = await conn.query(`
@@ -422,6 +431,7 @@ export async function getExportOrderCount(
 /**
  * Export orders to CSV format
  * Returns the CSV content as a string
+ * Supports: all orders, date-range filtered, or current view filters/sort
  */
 export async function exportOrdersToCsv(
 	db: AsyncDuckDB,
@@ -430,11 +440,25 @@ export async function exportOrdersToCsv(
 	const conn = await db.connect();
 	try {
 		// Build the WHERE clause based on options
-		// creation_date is stored as DATE type in the parquet file
 		let whereClause = '';
+		let orderBy = 'creation_date DESC, id DESC'; // default
+
 		if (options.type === 'date-range' && options.startDate && options.endDate) {
-			// Compare dates directly using DATE literals
+			// Date range filter
 			whereClause = `WHERE creation_date >= DATE '${options.startDate}' AND creation_date <= DATE '${options.endDate}'`;
+		} else if (options.type === 'filtered') {
+			// Current view filters (reference search + column filters)
+			const conditions = buildWhereConditions(options.referenceSearch, options.columnFilters);
+			whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+			// Apply current sort order if specified
+			if (options.sortConfig) {
+				const dbColumn = COLUMN_MAP[options.sortConfig.column];
+				if (dbColumn) {
+					const direction = options.sortConfig.direction.toUpperCase();
+					orderBy = `${dbColumn} ${direction}, id ${direction}`;
+				}
+			}
 		}
 
 		// First get the count
@@ -462,7 +486,7 @@ export async function exportOrdersToCsv(
 				liquidity_provider
 			FROM orders
 			${whereClause}
-			ORDER BY creation_date DESC, id DESC
+			ORDER BY ${orderBy}
 		`);
 
 		const rows = result.toArray();

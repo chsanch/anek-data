@@ -424,7 +424,12 @@
 	onclose={() => showExportModal = false}
 	onexport={handleExport}
 	ongetcount={handleGetExportCount}
-	totalOrders={totalOrders}
+	totalOrders={hasActiveFilters ? stats.totalTrades : totalOrders}
+	filteredCount={totalOrders}
+	hasActiveFilters={hasActiveFilters}
+	{referenceSearch}
+	{columnFilters}
+	sortConfig={currentSort}
 	{exporting}
 />
 
