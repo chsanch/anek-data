@@ -14,6 +14,15 @@ export interface DashboardStats {
 }
 
 /**
+ * Volume breakdown by currency
+ */
+export interface VolumeByCurrency {
+	currency: string;
+	volume: number;
+	orderCount: number;
+}
+
+/**
  * Query paginated orders from the database
  * Orders are sorted by creation_date DESC, then id DESC
  */
@@ -149,6 +158,37 @@ export async function getDashboardStats(db: AsyncDuckDB): Promise<DashboardStats
 			avgRate: toSafeNumber(row.avg_rate),
 			totalChains: toSafeNumber(row.total_chains)
 		};
+	} finally {
+		await conn.close();
+	}
+}
+
+/**
+ * Get volume breakdown by sell currency
+ * Returns top currencies by volume, sorted descending
+ */
+export async function getVolumeByCurrency(
+	db: AsyncDuckDB,
+	limit: number = 5
+): Promise<VolumeByCurrency[]> {
+	const conn = await db.connect();
+	try {
+		const result = await conn.query(`
+			SELECT
+				sell_currency as currency,
+				(SUM(sell_amount_cents)::DOUBLE / 100.0) as volume,
+				COUNT(*)::BIGINT as order_count
+			FROM orders
+			GROUP BY sell_currency
+			ORDER BY volume DESC
+			LIMIT ${limit}
+		`);
+
+		return result.toArray().map((row) => ({
+			currency: String(row.currency),
+			volume: toSafeNumber(row.volume),
+			orderCount: toSafeNumber(row.order_count)
+		}));
 	} finally {
 		await conn.close();
 	}

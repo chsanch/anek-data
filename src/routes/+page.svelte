@@ -11,7 +11,9 @@
 		getPaginatedOrders,
 		getTotalOrderCount,
 		getDashboardStats,
-		type DashboardStats
+		getVolumeByCurrency,
+		type DashboardStats,
+		type VolumeByCurrency
 	} from '$lib/db/queries';
 	import type { UnifiedOrder } from '$lib/types/orders';
 
@@ -38,11 +40,16 @@
 	});
 	let statsLoading = $state(false);
 
+	// Volume by currency state
+	let volumeByCurrency: VolumeByCurrency[] = $state([]);
+	let volumeLoading = $state(false);
+
 	// Load data when initialized
 	$effect(() => {
 		if (dataContext.state.initialized && dataContext.db) {
 			loadOrders(currentPage);
 			loadStats();
+			loadVolumeByCurrency();
 		}
 	});
 
@@ -83,20 +90,31 @@
 		}
 	}
 
-	async function handleRefresh() {
-		await dataContext.refresh();
-		// Reset to first page on refresh and reload stats
-		currentPage = 1;
-		loadStats();
+	async function loadVolumeByCurrency() {
+		if (!dataContext.db) return;
+
+		volumeLoading = true;
+		try {
+			volumeByCurrency = await getVolumeByCurrency(dataContext.db, 5);
+		} catch (e) {
+			console.error('Failed to load volume by currency:', e);
+		} finally {
+			volumeLoading = false;
+		}
 	}
 
-	const volumeByCurrency = $state([
-		{ currency: 'EUR', volume: 1_234_567_890, change: 12.4 },
-		{ currency: 'USD', volume: 987_654_321, change: -3.2 },
-		{ currency: 'CHF', volume: 456_789_012, change: 8.7 },
-		{ currency: 'GBP', volume: 234_567_890, change: -1.5 },
-		{ currency: 'DKK', volume: 123_456_789, change: 5.3 }
-	]);
+	async function handleRefresh() {
+		await dataContext.refresh();
+		// Reset to first page on refresh and reload all data
+		currentPage = 1;
+		loadStats();
+		loadVolumeByCurrency();
+	}
+
+	// Calculate max volume for bar chart scaling
+	let maxVolume = $derived(
+		volumeByCurrency.length > 0 ? Math.max(...volumeByCurrency.map((v) => v.volume)) : 1
+	);
 
 </script>
 
@@ -168,25 +186,31 @@
 		<!-- Volume by Currency -->
 		<section class="volume-section">
 			<h2 class="section-title">Volume by Currency</h2>
-			<div class="currency-grid">
-				{#each volumeByCurrency as { currency, volume, change } (currency)}
-					<div class="currency-card">
-						<div class="currency-header">
-							<span class="currency-code">{currency}</span>
-							<span class="currency-change" class:positive={change > 0} class:negative={change < 0}>
-								{change > 0 ? '+' : ''}{change.toFixed(1)}%
-							</span>
+			{#if volumeLoading}
+				<div class="volume-loading">
+					<LoadingIndicator message="Loading volume data..." />
+				</div>
+			{:else if volumeByCurrency.length === 0}
+				<div class="volume-empty">No volume data available</div>
+			{:else}
+				<div class="currency-grid">
+					{#each volumeByCurrency as { currency, volume, orderCount } (currency)}
+						<div class="currency-card">
+							<div class="currency-header">
+								<span class="currency-code">{currency}</span>
+								<span class="currency-orders">{orderCount.toLocaleString()} orders</span>
+							</div>
+							<div class="currency-volume">{formatCompact(volume)}</div>
+							<div class="currency-bar">
+								<div
+									class="currency-bar-fill"
+									style="width: {(volume / maxVolume) * 100}%"
+								></div>
+							</div>
 						</div>
-						<div class="currency-volume">{formatCompact(volume)}</div>
-						<div class="currency-bar">
-							<div
-								class="currency-bar-fill"
-								style="width: {(volume / volumeByCurrency[0].volume) * 100}%"
-							></div>
-						</div>
-					</div>
-				{/each}
-			</div>
+					{/each}
+				</div>
+			{/if}
 		</section>
 
 		<!-- Orders Table -->
@@ -434,18 +458,21 @@
 		color: var(--text-white);
 	}
 
-	.currency-change {
+	.currency-orders {
 		font-family: 'IBM Plex Mono', monospace;
-		font-size: 12px;
+		font-size: 11px;
 		font-weight: 500;
+		color: var(--text-muted);
 	}
 
-	.currency-change.positive {
-		color: var(--accent-primary);
-	}
-
-	.currency-change.negative {
-		color: var(--accent-danger);
+	.volume-loading,
+	.volume-empty {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 32px;
+		color: var(--text-muted);
+		font-size: 14px;
 	}
 
 	.currency-volume {
