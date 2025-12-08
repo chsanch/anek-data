@@ -20,7 +20,8 @@
 		downloadCsv,
 		getExportOrderCount,
 		type DashboardStats,
-		type VolumeByCurrency
+		type VolumeByCurrency,
+		type SortConfig
 	} from '$lib/db/queries';
 	import type { UnifiedOrder } from '$lib/types/orders';
 
@@ -34,6 +35,9 @@
 	// Pagination state
 	const PAGE_SIZE = 20;
 	let currentPage = $state(1);
+
+	// Sorting state
+	let currentSort = $state<SortConfig | undefined>(undefined);
 
 	// Orders state
 	let orders: UnifiedOrder[] = $state([]);
@@ -64,14 +68,14 @@
 		}
 	});
 
-	async function loadOrders(page: number) {
+	async function loadOrders(page: number, sort?: SortConfig) {
 		if (!dataContext.db) return;
 
 		ordersLoading = true;
 		try {
 			const offset = (page - 1) * PAGE_SIZE;
 			const [fetchedOrders, count] = await Promise.all([
-				getPaginatedOrders(dataContext.db, PAGE_SIZE, offset),
+				getPaginatedOrders(dataContext.db, PAGE_SIZE, offset, sort),
 				getTotalOrderCount(dataContext.db)
 			]);
 			orders = fetchedOrders;
@@ -85,7 +89,13 @@
 
 	function handlePageChange(page: number) {
 		currentPage = page;
-		loadOrders(page);
+		loadOrders(page, currentSort);
+	}
+
+	function handleSortChange(sort: SortConfig | undefined) {
+		currentSort = sort;
+		currentPage = 1; // Reset to first page when sorting changes
+		loadOrders(1, sort);
 	}
 
 	async function loadStats(useCache = true) {
@@ -146,6 +156,7 @@
 		await dataContext.refresh();
 		// Reset to first page on refresh and reload all data (bypassing cache)
 		currentPage = 1;
+		loadOrders(1);
 		loadStats(false);
 		loadVolumeByCurrency(false);
 	}
@@ -320,6 +331,8 @@
 					pageSize={PAGE_SIZE}
 					currentPage={currentPage}
 					onPageChange={handlePageChange}
+					onSortChange={handleSortChange}
+					currentSort={currentSort}
 				/>
 			{/if}
 		</section>

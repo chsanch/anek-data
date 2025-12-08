@@ -24,9 +24,9 @@
 
 **Purpose**: Install dependencies and create type definitions
 
-- [ ] T001 Install @tanstack/svelte-table dependency via `pnpm add @tanstack/svelte-table`
-- [ ] T002 [P] Create table types file at src/lib/types/table.ts with TableState, SortingState, ColumnFiltersState interfaces from contracts/table-api.ts
-- [ ] T003 [P] Create column definitions constant ORDER_COLUMNS in src/lib/types/table.ts with all 9 columns configured for sortable/filterable flags
+- [x] T001 Install @tanstack/table-core dependency via `pnpm add @tanstack/table-core` (**Note**: Using table-core, not svelte-table due to Svelte 5 incompatibility)
+- [x] T002 [P] Create table types file at src/lib/types/table.ts with TableState, SortingState, ColumnFiltersState interfaces from contracts/table-api.ts
+- [x] T003 [P] Create column definitions constant ORDER_COLUMNS in src/lib/types/table.ts with all 9 columns configured for sortable/filterable flags
 
 ---
 
@@ -36,31 +36,35 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Add getAllOrders query function to src/lib/db/queries.ts that fetches all orders without pagination (TanStack will handle client-side pagination)
-- [ ] T005 Refactor OrdersTable.svelte to use createSvelteTable with getCoreRowModel and getPaginationRowModel at src/lib/components/OrdersTable.svelte
-- [ ] T006 Update +page.svelte to pass all orders to OrdersTable instead of paginated orders at src/routes/+page.svelte
-- [ ] T007 Verify table renders with TanStack managing pagination (existing pagination should still work)
+**Implementation Note**: We discovered `@tanstack/svelte-table` is incompatible with Svelte 5 (imports removed `svelte/internal`). Created custom adapter in `src/lib/components/table/` based on [walker-tx/svelte5-tanstack-table-reference](https://github.com/walker-tx/svelte5-tanstack-table-reference).
 
-**Checkpoint**: Foundation ready - TanStack Table integrated, existing functionality preserved
+- [x] T004 Add getAllOrders query function to src/lib/db/queries.ts (kept for potential future use)
+- [x] T005 Create custom Svelte 5 TanStack adapter at src/lib/components/table/ with createSvelteTable, FlexRender, and render helpers
+- [x] T006 Refactor OrdersTable.svelte to use custom adapter with TanStack for UI state management
+- [x] T007 Verify table renders with SQL-based pagination (TanStack manages sort UI, SQL handles data)
+
+**Checkpoint**: Foundation ready - Custom TanStack adapter integrated, SQL pagination preserved
 
 ---
 
-## Phase 3: User Story 1 - Column Sorting (Priority: P1) 🎯 MVP
+## Phase 3: User Story 1 - Column Sorting (Priority: P1) 🎯 MVP ✅ COMPLETE
 
 **Goal**: Users can click column headers to sort data ascending/descending
 
-**Independent Test**: Click "Rate" header → orders sort by rate. Click again → reverses. Click different header → clears previous sort.
+**Independent Test**: Click "Rate" header → orders sort by rate across ENTIRE dataset. Click again → reverses. Click different header → clears previous sort.
+
+**Implementation Note**: We pivoted from client-side sorting to **SQL-based sorting**. TanStack manages the sort UI state, but actual sorting is done via DuckDB `ORDER BY` clause. This ensures sorting applies to the entire 73K+ dataset, not just the visible page.
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Add getSortedRowModel to TanStack table configuration in src/lib/components/OrdersTable.svelte
-- [ ] T009 [US1] Add sorting state ($state) and onSortingChange callback to table options in src/lib/components/OrdersTable.svelte
-- [ ] T010 [US1] Update table header cells to call column.getToggleSortingHandler() on click in src/lib/components/OrdersTable.svelte
-- [ ] T011 [US1] Add visual sort indicators (↑/↓ arrows) to header cells using column.getIsSorted() in src/lib/components/OrdersTable.svelte
-- [ ] T012 [US1] Add cursor:pointer and hover styles to sortable column headers in src/lib/components/OrdersTable.svelte
-- [ ] T013 [US1] Configure sortUndefined: 'last' for columns that may have null values in src/lib/types/table.ts
+- [x] T008 [US1] Add SortConfig interface and sortConfig parameter to getPaginatedOrders in src/lib/db/queries.ts
+- [x] T009 [US1] Add sorting state management with onSortChange callback and currentSort prop in src/lib/components/OrdersTable.svelte
+- [x] T010 [US1] Configure TanStack with manualSorting: true (SQL handles sorting, TanStack handles UI)
+- [x] T011 [US1] Add visual sort indicators (↑/↓/↕ arrows) to header cells using column.getIsSorted() in src/lib/components/OrdersTable.svelte
+- [x] T012 [US1] Add cursor:pointer and hover styles to sortable column headers in src/lib/components/OrdersTable.svelte
+- [x] T013 [US1] Configure sortUndefined: 'last' for columns that may have null values in src/lib/types/table.ts
 
-**Checkpoint**: Column sorting fully functional - MVP complete
+**Checkpoint**: Column sorting fully functional - MVP complete ✅
 
 ---
 

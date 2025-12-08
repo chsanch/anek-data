@@ -10,7 +10,7 @@ Enhance the orders table with professional UX features: column sorting, page siz
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x (strict mode)
-**Primary Dependencies**: Svelte 5, SvelteKit, @tanstack/svelte-table, DuckDB WASM
+**Primary Dependencies**: Svelte 5, SvelteKit, @tanstack/table-core (with custom Svelte 5 adapter), DuckDB WASM
 **Storage**: DuckDB WASM (in-browser), IndexedDB (persistence)
 **Testing**: Vitest (unit), Playwright (e2e)
 **Target Platform**: Modern browsers (Chrome, Firefox, Safari, Edge)
@@ -57,23 +57,28 @@ specs/002-enhanced-orders-table/
 src/
 ├── lib/
 │   ├── components/
-│   │   ├── OrdersTable.svelte       # MODIFY: Integrate TanStack Table
-│   │   ├── TableToolbar.svelte      # NEW: Search, filters, page size
-│   │   ├── FilterDropdown.svelte    # NEW: Column-specific filters
-│   │   ├── ExportModal.svelte       # MODIFY: Add filtered export option
+│   │   ├── OrdersTable.svelte       # MODIFIED: Uses TanStack for sort UI, SQL for data
+│   │   ├── table/                   # NEW: Custom Svelte 5 TanStack adapter
+│   │   │   ├── index.ts             # Re-exports from @tanstack/table-core
+│   │   │   ├── table.svelte.ts      # createSvelteTable with $state/$effect
+│   │   │   ├── FlexRender.svelte    # Flexible cell/header rendering
+│   │   │   └── render-component.ts  # Helper classes for rendering
+│   │   ├── TableToolbar.svelte      # NEW: Search, filters, page size (future)
+│   │   ├── FilterDropdown.svelte    # NEW: Column-specific filters (future)
+│   │   ├── ExportModal.svelte       # MODIFY: Add filtered export option (future)
 │   │   └── Modal.svelte             # EXISTS: Reuse
 │   ├── db/
-│   │   └── queries.ts               # MODIFY: Add filtered queries
+│   │   └── queries.ts               # MODIFIED: Added SortConfig, sortConfig param
 │   ├── types/
-│   │   └── table.ts                 # NEW: Table state types
+│   │   └── table.ts                 # NEW: Table state types, ORDER_COLUMNS
 │   └── utils/
 │       ├── debounce.ts              # EXISTS: Reuse
 │       └── format.ts                # EXISTS: Reuse
 ├── routes/
-│   └── +page.svelte                 # MODIFY: Wire up table state
+│   └── +page.svelte                 # MODIFIED: Handles sort state, passes to table
 └── tests/
     └── unit/
-        └── table.test.ts            # NEW: Table logic tests
+        └── table.test.ts            # NEW: Table logic tests (future)
 ```
 
 **Structure Decision**: Single SvelteKit project with components in `src/lib/components/`. No monorepo structure needed - this is a UI enhancement to existing table.

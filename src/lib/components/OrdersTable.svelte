@@ -1,6 +1,14 @@
 <script lang="ts">
 	import type { UnifiedOrder } from '$lib/types/orders';
+	import type { SortingState } from '@tanstack/table-core';
+	import type { SortConfig } from '$lib/db/queries';
 	import { formatCurrency, formatDate } from '$lib/utils/format';
+	import {
+		createSvelteTable,
+		getCoreRowModel,
+		FlexRender
+	} from '$lib/components/table';
+	import { ORDER_COLUMNS } from '$lib/types/table';
 	import Skeleton from './Skeleton.svelte';
 	import EmptyState from './EmptyState.svelte';
 
@@ -11,6 +19,8 @@
 		pageSize?: number;
 		currentPage?: number;
 		onPageChange?: (page: number) => void;
+		onSortChange?: (sort: SortConfig | undefined) => void;
+		currentSort?: SortConfig;
 	}
 
 	let {
@@ -19,25 +29,51 @@
 		totalCount,
 		pageSize = 20,
 		currentPage = 1,
-		onPageChange
+		onPageChange,
+		onSortChange,
+		currentSort
 	}: Props = $props();
 
-	// Use totalCount for SQL pagination, or fallback to orders.length for client-side
+	// Convert currentSort prop to TanStack SortingState format
+	let sorting = $derived<SortingState>(
+		currentSort ? [{ id: currentSort.column, desc: currentSort.direction === 'desc' }] : []
+	);
+
+	// Create the TanStack table (no client-side sorting - SQL handles it)
+	const table = createSvelteTable({
+		get data() {
+			return orders;
+		},
+		columns: ORDER_COLUMNS,
+		state: {
+			get sorting() {
+				return sorting;
+			}
+		},
+		onSortingChange: (updater) => {
+			// Calculate new sorting state
+			const newSorting = typeof updater === 'function' ? updater(sorting) : updater;
+
+			// Convert to SortConfig and notify parent
+			if (newSorting.length > 0) {
+				const sort = newSorting[0];
+				onSortChange?.({ column: sort.id, direction: sort.desc ? 'desc' : 'asc' });
+			} else {
+				onSortChange?.(undefined);
+			}
+		},
+		getCoreRowModel: getCoreRowModel(),
+		// No getSortedRowModel - SQL handles sorting
+		manualSorting: true // Tell TanStack we handle sorting externally
+	});
+
+	// Use SQL-based pagination from parent
 	let effectiveTotalCount = $derived(totalCount ?? orders.length);
 	let totalPages = $derived(Math.ceil(effectiveTotalCount / pageSize));
 
-	// For SQL pagination, orders are already paginated; for client-side, slice them
-	let displayOrders = $derived(
-		totalCount !== undefined
-			? orders // SQL pagination: orders are already the current page
-			: orders.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-	);
-
 	function goToPage(page: number) {
-		if (page >= 1 && page <= totalPages) {
-			if (onPageChange) {
-				onPageChange(page);
-			}
+		if (page >= 1 && page <= totalPages && onPageChange) {
+			onPageChange(page);
 		}
 	}
 
@@ -90,17 +126,37 @@
 <div class="table-container">
 	<table class="orders-table">
 		<thead>
-			<tr>
-				<th>Reference</th>
-				<th>Type</th>
-				<th>Direction</th>
-				<th>Buy</th>
-				<th>Sell</th>
-				<th class="align-right">Rate</th>
-				<th>Value Date</th>
-				<th>Status</th>
-				<th>LP</th>
-			</tr>
+			{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+				<tr>
+					{#each headerGroup.headers as header (header.id)}
+						<th
+							class:sortable={header.column.getCanSort()}
+							class:align-right={header.id === 'rate'}
+							onclick={header.column.getToggleSortingHandler()}
+							aria-sort={header.column.getIsSorted()
+								? header.column.getIsSorted() === 'desc'
+									? 'descending'
+									: 'ascending'
+								: 'none'}
+						>
+							<span class="header-content">
+								<FlexRender content={header.column.columnDef.header} context={header.getContext()} />
+								{#if header.column.getCanSort()}
+									<span class="sort-indicator" class:active={header.column.getIsSorted()}>
+										{#if header.column.getIsSorted() === 'asc'}
+											↑
+										{:else if header.column.getIsSorted() === 'desc'}
+											↓
+										{:else}
+											<span class="sort-hint">↕</span>
+										{/if}
+									</span>
+								{/if}
+							</span>
+						</th>
+					{/each}
+				</tr>
+			{/each}
 		</thead>
 		<tbody>
 			{#if loading}
@@ -117,7 +173,7 @@
 						<td><Skeleton width="50px" height="14px" /></td>
 					</tr>
 				{/each}
-			{:else if displayOrders.length === 0}
+			{:else if table.getRowModel().rows.length === 0}
 				<tr>
 					<td colspan="9" class="cell-empty">
 						<EmptyState
@@ -128,7 +184,8 @@
 					</td>
 				</tr>
 			{:else}
-				{#each displayOrders as order (order.id)}
+				{#each table.getRowModel().rows as row (row.id)}
+					{@const order = row.original}
 					<tr>
 						<td class="cell-reference">{order.reference}</td>
 						<td>
@@ -236,6 +293,41 @@
 
 	.orders-table th.align-right {
 		text-align: right;
+	}
+
+	.orders-table th.sortable {
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.orders-table th.sortable:hover {
+		background: var(--bg-elevated);
+		color: var(--text-primary);
+	}
+
+	.header-content {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	.sort-indicator {
+		font-size: 10px;
+		opacity: 0.3;
+		transition: opacity 0.15s ease;
+	}
+
+	.sort-indicator.active {
+		opacity: 1;
+		color: var(--accent-primary);
+	}
+
+	.sort-hint {
+		font-size: 9px;
+	}
+
+	.orders-table th.sortable:hover .sort-indicator {
+		opacity: 0.6;
 	}
 
 	.orders-table td {

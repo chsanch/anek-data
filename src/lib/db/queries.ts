@@ -32,14 +32,97 @@ export interface VolumeByCurrency {
 }
 
 /**
+ * Sort configuration for orders query
+ */
+export interface SortConfig {
+	column: string;
+	direction: 'asc' | 'desc';
+}
+
+/**
+ * Map from camelCase column names to snake_case DB columns
+ */
+const COLUMN_MAP: Record<string, string> = {
+	reference: 'reference',
+	fxOrderType: 'fx_order_type',
+	marketDirection: 'market_direction',
+	buyCurrency: 'buy_currency',
+	sellCurrency: 'sell_currency',
+	rate: 'rate',
+	valueDate: 'value_date',
+	status: 'status',
+	liquidityProvider: 'liquidity_provider',
+	creationDate: 'creation_date'
+};
+
+/**
  * Query paginated orders from the database
- * Orders are sorted by creation_date DESC, then id DESC
+ * Supports custom sorting via sortConfig parameter
  */
 export async function getPaginatedOrders(
 	db: AsyncDuckDB,
 	limit: number,
-	offset: number
+	offset: number,
+	sortConfig?: SortConfig
 ): Promise<UnifiedOrder[]> {
+	const conn = await db.connect();
+	try {
+		// Build ORDER BY clause
+		let orderBy = 'creation_date DESC, id DESC'; // default
+		if (sortConfig) {
+			const dbColumn = COLUMN_MAP[sortConfig.column];
+			if (dbColumn) {
+				const direction = sortConfig.direction.toUpperCase();
+				orderBy = `${dbColumn} ${direction}, id ${direction}`;
+			}
+		}
+
+		const result = await conn.query(`
+			SELECT
+				id,
+				reference,
+				fx_order_type,
+				market_direction,
+				buy_amount_cents,
+				sell_amount_cents,
+				buy_currency,
+				sell_currency,
+				rate,
+				value_date,
+				creation_date,
+				execution_date,
+				status,
+				liquidity_provider
+			FROM orders
+			ORDER BY ${orderBy}
+			LIMIT ${limit} OFFSET ${offset}
+		`);
+
+		return result.toArray().map(mapRowToOrder);
+	} finally {
+		await conn.close();
+	}
+}
+
+/**
+ * Get total count of orders for pagination
+ */
+export async function getTotalOrderCount(db: AsyncDuckDB): Promise<number> {
+	const conn = await db.connect();
+	try {
+		const result = await conn.query('SELECT COUNT(*) as total_count FROM orders');
+		const row = result.toArray()[0];
+		return Number(row.total_count);
+	} finally {
+		await conn.close();
+	}
+}
+
+/**
+ * Get all orders from the database without pagination
+ * Used with TanStack Table for client-side sorting/filtering/pagination
+ */
+export async function getAllOrders(db: AsyncDuckDB): Promise<UnifiedOrder[]> {
 	const conn = await db.connect();
 	try {
 		const result = await conn.query(`
@@ -60,24 +143,9 @@ export async function getPaginatedOrders(
 				liquidity_provider
 			FROM orders
 			ORDER BY creation_date DESC, id DESC
-			LIMIT ${limit} OFFSET ${offset}
 		`);
 
 		return result.toArray().map(mapRowToOrder);
-	} finally {
-		await conn.close();
-	}
-}
-
-/**
- * Get total count of orders for pagination
- */
-export async function getTotalOrderCount(db: AsyncDuckDB): Promise<number> {
-	const conn = await db.connect();
-	try {
-		const result = await conn.query('SELECT COUNT(*) as total_count FROM orders');
-		const row = result.toArray()[0];
-		return Number(row.total_count);
 	} finally {
 		await conn.close();
 	}

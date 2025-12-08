@@ -11,6 +11,9 @@ importers:
       '@duckdb/duckdb-wasm':
         specifier: ^1.30.0
         version: 1.30.0
+      '@tanstack/table-core':
+        specifier: ^8.21.3
+        version: 8.21.3
     devDependencies:
       '@eslint/compat':
         specifier: ^1.4.0
@@ -571,6 +574,10 @@ packages:
     resolution: {integrity: sha512-4+9w8ZHOiGnpcGI6z1TVVfWaX/koK7fKeSYF3qlYg2xpBtbteP2ddBxiarL+HVgfSJGeK5RIxRQmKm4rTJJAwA==}
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7
+
+  '@tanstack/table-core@8.21.3':
+    resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
+    engines: {node: '>=12'}
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -1965,6 +1972,8 @@ snapshots:
       '@tailwindcss/oxide': 4.1.17
       tailwindcss: 4.1.17
       vite: 7.2.7(@types/node@22.19.1)(jiti@2.6.1)(lightningcss@1.30.2)
+
+  '@tanstack/table-core@8.21.3': {}
 
   '@types/chai@5.2.3':
     dependencies:

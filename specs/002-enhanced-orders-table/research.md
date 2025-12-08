@@ -25,31 +25,46 @@
 
 ### 2. Data Source Strategy: TanStack vs DuckDB Queries
 
-**Decision**: Hybrid approach - TanStack for UI state, DuckDB for data retrieval
+**Decision**: Hybrid approach - SQL for sorting/pagination, TanStack for UI state management
 
-**Rationale**:
-- Load all data into TanStack Table on initial fetch
-- Use TanStack's client-side `getSortedRowModel()`, `getFilteredRowModel()`, `getPaginationRowModel()`
-- This keeps all operations in-memory (<200ms per constitution)
-- DuckDB remains source of truth, TanStack handles presentation layer
+**Rationale** (Updated after implementation):
+- **SQL-based sorting**: DuckDB handles `ORDER BY` across entire dataset (73K+ rows)
+- **SQL-based pagination**: DuckDB handles `LIMIT/OFFSET` for fast page loads
+- **TanStack for UI**: Manages sort state, click handlers, visual indicators
+- This approach sorts the **entire dataset**, not just the visible page
 
-**Alternatives Considered**:
-- **DuckDB-only with SQL sorting/filtering**: Would require rebuilding pagination/sort state management. Each filter change = new SQL query. More complex state coordination.
-- **TanStack server-side mode**: Not applicable - we're fully client-side per constitution.
+**Why we pivoted from client-side sorting**:
+- Loading all 73K orders for client-side sorting was too slow (~5+ seconds)
+- Users expect sorting to apply to the entire dataset, not just current page
+- DuckDB is extremely fast for sorting (<50ms for 73K rows)
 
 **Implementation Notes**:
 ```typescript
-// Load all orders once from DuckDB
-const allOrders = await getAllOrders(db);
+// queries.ts - SQL handles sorting
+export async function getPaginatedOrders(
+  db: AsyncDuckDB,
+  limit: number,
+  offset: number,
+  sortConfig?: SortConfig  // { column: 'rate', direction: 'desc' }
+): Promise<UnifiedOrder[]> {
+  const orderBy = sortConfig
+    ? `${COLUMN_MAP[sortConfig.column]} ${sortConfig.direction.toUpperCase()}`
+    : 'creation_date DESC';
 
-// TanStack handles the rest client-side
+  return db.query(`SELECT * FROM orders ORDER BY ${orderBy} LIMIT ${limit} OFFSET ${offset}`);
+}
+
+// OrdersTable.svelte - TanStack manages UI state only
 const table = createSvelteTable({
-  data: allOrders,
-  columns,
+  data: orders,  // Current page data from SQL
+  columns: ORDER_COLUMNS,
+  manualSorting: true,  // Tell TanStack we handle sorting externally
+  onSortingChange: (updater) => {
+    // Convert TanStack state to SQL sort config and re-fetch
+    onSortChange?.({ column: sort.id, direction: sort.desc ? 'desc' : 'asc' });
+  },
   getCoreRowModel: getCoreRowModel(),
-  getSortedRowModel: getSortedRowModel(),
-  getFilteredRowModel: getFilteredRowModel(),
-  getPaginationRowModel: getPaginationRowModel(),
+  // No getSortedRowModel - SQL handles sorting
 });
 ```
 
@@ -57,41 +72,48 @@ const table = createSvelteTable({
 
 ### 3. TanStack Table with Svelte 5 Runes
 
-**Decision**: Use `$state` for table options, derive table instance
+**Decision**: Use custom adapter with `@tanstack/table-core` (not `@tanstack/svelte-table`)
 
-**Rationale**:
-- TanStack Svelte adapter returns a reactive store
-- Svelte 5 can interop with stores via `$` prefix
-- State changes (sorting, filtering) managed via `onSortingChange`, `onFilterChange` callbacks
+**Rationale** (Updated after implementation):
+- `@tanstack/svelte-table` is **incompatible with Svelte 5** - it imports from `svelte/internal` which was removed
+- Created custom adapter based on [walker-tx/svelte5-tanstack-table-reference](https://github.com/walker-tx/svelte5-tanstack-table-reference)
+- Adapter uses `$state` and `$effect.pre` for reactive state management
+
+**Custom Adapter Structure** (`src/lib/components/table/`):
+```text
+table/
+├── index.ts              # Re-exports from @tanstack/table-core
+├── table.svelte.ts       # createSvelteTable function with mergeObjects
+├── FlexRender.svelte     # Flexible cell/header rendering
+└── render-component.ts   # Helper classes for component/snippet rendering
+```
 
 **Implementation Pattern**:
-```svelte
-<script lang="ts">
-import { createSvelteTable, getCoreRowModel, getSortedRowModel } from '@tanstack/svelte-table';
+```typescript
+// table.svelte.ts
+import { createTable, type TableOptions } from '@tanstack/table-core';
 
-let sorting = $state<SortingState>([]);
-let globalFilter = $state('');
+export function createSvelteTable<TData>(options: TableOptions<TData>) {
+  const table = createTable(resolvedOptions);
+  let state = $state(table.initialState);
 
-const table = createSvelteTable({
-  get data() { return orders; },
-  columns,
-  state: {
-    get sorting() { return sorting; },
-    get globalFilter() { return globalFilter; }
-  },
-  onSortingChange: (updater) => {
-    sorting = typeof updater === 'function' ? updater(sorting) : updater;
-  },
-  onGlobalFilterChange: (updater) => {
-    globalFilter = typeof updater === 'function' ? updater(globalFilter) : updater;
-  },
-  getCoreRowModel: getCoreRowModel(),
-  getSortedRowModel: getSortedRowModel(),
-  getFilteredRowModel: getFilteredRowModel(),
-  getPaginationRowModel: getPaginationRowModel(),
-});
-</script>
+  $effect.pre(() => {
+    table.setOptions((prev) => mergeObjects(prev, options, {
+      state: mergeObjects(state, options.state || {}),
+      onStateChange: (updater) => {
+        state = typeof updater === 'function' ? updater(state) : updater;
+      }
+    }));
+  });
+
+  return table;
+}
+
+// mergeObjects preserves getters for reactivity (from SolidJS)
+export function mergeObjects(...sources) { /* ... */ }
 ```
+
+**Key Insight**: The `mergeObjects` function is critical - it preserves getter properties so TanStack can react to Svelte 5's `$state` changes.
 
 ---
 
@@ -168,7 +190,7 @@ async function handleExport(options: ExportOptions) {
 ## Dependencies to Add
 
 ```bash
-pnpm add @tanstack/svelte-table
+pnpm add @tanstack/table-core
 ```
 
-No additional dependencies required - TanStack is the only new package.
+**Note**: We use `@tanstack/table-core` (not `@tanstack/svelte-table`) because the Svelte adapter is incompatible with Svelte 5. Our custom adapter in `src/lib/components/table/` bridges this gap.
