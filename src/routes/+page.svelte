@@ -13,6 +13,10 @@
 	// Get data context from DataProvider
 	const dataContext = getDataContext();
 
+	// Pagination state
+	const PAGE_SIZE = 20;
+	let currentPage = $state(1);
+
 	// Orders state
 	let orders: UnifiedOrder[] = $state([]);
 	let totalOrders = $state(0);
@@ -21,17 +25,18 @@
 	// Load orders when data is initialized
 	$effect(() => {
 		if (dataContext.state.initialized && dataContext.db) {
-			loadOrders();
+			loadOrders(currentPage);
 		}
 	});
 
-	async function loadOrders() {
+	async function loadOrders(page: number) {
 		if (!dataContext.db) return;
 
 		ordersLoading = true;
 		try {
+			const offset = (page - 1) * PAGE_SIZE;
 			const [fetchedOrders, count] = await Promise.all([
-				getPaginatedOrders(dataContext.db, 20, 0),
+				getPaginatedOrders(dataContext.db, PAGE_SIZE, offset),
 				getTotalOrderCount(dataContext.db)
 			]);
 			orders = fetchedOrders;
@@ -43,8 +48,15 @@
 		}
 	}
 
+	function handlePageChange(page: number) {
+		currentPage = page;
+		loadOrders(page);
+	}
+
 	async function handleRefresh() {
 		await dataContext.refresh();
+		// Reset to first page on refresh
+		currentPage = 1;
 	}
 
 	// Mock data based on the data structure proposal (will be replaced with real stats in US2)
@@ -183,7 +195,14 @@
 					<ErrorMessage error={dataContext.state.error} onRetry={handleRefresh} />
 				</div>
 			{:else}
-				<OrdersTable orders={orders} />
+				<OrdersTable
+					orders={orders}
+					loading={ordersLoading}
+					totalCount={totalOrders}
+					pageSize={PAGE_SIZE}
+					currentPage={currentPage}
+					onPageChange={handlePageChange}
+				/>
 			{/if}
 		</section>
 	</main>

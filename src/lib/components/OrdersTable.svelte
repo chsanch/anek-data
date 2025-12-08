@@ -5,21 +5,37 @@
 	interface Props {
 		orders: UnifiedOrder[];
 		loading?: boolean;
+		totalCount?: number;
+		pageSize?: number;
+		currentPage?: number;
+		onPageChange?: (page: number) => void;
 	}
 
-	let { orders, loading = false }: Props = $props();
+	let {
+		orders,
+		loading = false,
+		totalCount,
+		pageSize = 20,
+		currentPage = 1,
+		onPageChange
+	}: Props = $props();
 
-	let currentPage = $state(1);
-	const pageSize = 20;
+	// Use totalCount for SQL pagination, or fallback to orders.length for client-side
+	let effectiveTotalCount = $derived(totalCount ?? orders.length);
+	let totalPages = $derived(Math.ceil(effectiveTotalCount / pageSize));
 
-	let totalPages = $derived(Math.ceil(orders.length / pageSize));
-	let paginatedOrders = $derived(
-		orders.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+	// For SQL pagination, orders are already paginated; for client-side, slice them
+	let displayOrders = $derived(
+		totalCount !== undefined
+			? orders // SQL pagination: orders are already the current page
+			: orders.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 	);
 
 	function goToPage(page: number) {
 		if (page >= 1 && page <= totalPages) {
-			currentPage = page;
+			if (onPageChange) {
+				onPageChange(page);
+			}
 		}
 	}
 
@@ -92,14 +108,14 @@
 						<span>Loading orders...</span>
 					</td>
 				</tr>
-			{:else if paginatedOrders.length === 0}
+			{:else if displayOrders.length === 0}
 				<tr>
 					<td colspan="9" class="cell-empty">
 						No orders found
 					</td>
 				</tr>
 			{:else}
-				{#each paginatedOrders as order (order.id)}
+				{#each displayOrders as order (order.id)}
 					<tr>
 						<td class="cell-reference">{order.reference}</td>
 						<td>
@@ -137,7 +153,7 @@
 
 <div class="pagination">
 	<div class="pagination-info">
-		Showing {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, orders.length)} of {orders.length} orders
+		Showing {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, effectiveTotalCount)} of {effectiveTotalCount} orders
 	</div>
 	<div class="pagination-controls">
 		<button
