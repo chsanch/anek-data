@@ -7,7 +7,7 @@
 	import ErrorMessage from '$lib/components/ErrorMessage.svelte';
 	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import { formatCompact } from '$lib/utils/format';
-	import { debounce, QueryCache } from '$lib/utils/debounce';
+	import { QueryCache } from '$lib/utils/debounce';
 	import { getDataContext } from '$lib/db/context';
 	import {
 		getPaginatedOrders,

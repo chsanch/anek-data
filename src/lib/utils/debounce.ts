@@ -2,7 +2,7 @@
  * Creates a debounced version of a function that delays execution
  * until after a specified wait time has elapsed since the last call.
  */
-export function debounce<T extends (...args: Parameters<T>) => void>(
+export function debounce<T extends (...args: any[]) => void>(
 	fn: T,
 	wait: number
 ): (...args: Parameters<T>) => void {
