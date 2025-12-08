@@ -104,6 +104,8 @@ Then set `PUBLIC_PARQUET_URL=http://localhost:8888/orders.parquet` in `.env`
 ## Active Technologies
 - TypeScript 5.x (strict mode) + Svelte 5, SvelteKit, @tanstack/svelte-table, DuckDB WASM (002-enhanced-orders-table)
 - DuckDB WASM (in-browser), IndexedDB (persistence) (002-enhanced-orders-table)
+- TypeScript 5.x (strict mode) + SvelteKit, Svelte 5, @duckdb/duckdb-wasm, idb (IndexedDB wrapper) (003-parquet-cache)
+- IndexedDB (browser persistence for parquet buffers) (003-parquet-cache)
 
 ## Recent Changes
 - 002-enhanced-orders-table: Added TypeScript 5.x (strict mode) + Svelte 5, SvelteKit, @tanstack/svelte-table, DuckDB WASM
