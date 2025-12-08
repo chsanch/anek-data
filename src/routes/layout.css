@@ -1,5 +1,15 @@
 @import 'tailwindcss';
 
+/* Base body styles */
+body {
+	font-family: 'DM Sans', system-ui, sans-serif;
+	background: var(--bg-primary);
+	color: var(--text-primary);
+	margin: 0;
+	min-height: 100vh;
+	transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 /* Base variables - Light theme is default (follows system) */
 :root {
 	/* Backgrounds */

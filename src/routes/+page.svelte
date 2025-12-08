@@ -2,6 +2,7 @@
 	import StatCard from '$lib/components/StatCard.svelte';
 	import OrdersTable from '$lib/components/OrdersTable.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+	import { formatCompact } from '$lib/utils/format';
 	import type { UnifiedOrder } from '$lib/types/orders';
 
 	// Mock data based on the data structure proposal
@@ -57,23 +58,10 @@
 		}))
 	);
 
-	function formatCurrency(cents: number): string {
-		return new Intl.NumberFormat('en-US', {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2
-		}).format(cents / 100);
-	}
-
-	function formatCompact(value: number): string {
-		if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
-		if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
-		if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-		return value.toString();
-	}
 </script>
 
 <svelte:head>
-	<title>ANEC FX Analytics</title>
+	<title>ANEK FX Analytics</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com" />
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
 	<link
@@ -88,7 +76,7 @@
 		<div class="header-left">
 			<div class="logo">
 				<span class="logo-mark">A</span>
-				<span class="logo-text">ANEC</span>
+				<span class="logo-text">ANEK</span>
 			</div>
 			<nav class="nav">
 				<a href="/" class="nav-link active">Dashboard</a>
@@ -175,21 +163,12 @@
 					<button class="btn-export">Export</button>
 				</div>
 			</div>
-			<OrdersTable orders={mockOrders} {formatCurrency} />
+			<OrdersTable orders={mockOrders} />
 		</section>
 	</main>
 </div>
 
 <style>
-	:global(body) {
-		font-family: 'DM Sans', system-ui, sans-serif;
-		background: var(--bg-primary);
-		color: var(--text-primary);
-		margin: 0;
-		min-height: 100vh;
-		transition: background-color 0.3s ease, color 0.3s ease;
-	}
-
 	.dashboard {
 		min-height: 100vh;
 		display: flex;

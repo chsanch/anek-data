@@ -1,12 +1,12 @@
 <script lang="ts">
 	import type { UnifiedOrder } from '$lib/types/orders';
+	import { formatCurrency } from '$lib/utils/format';
 
 	interface Props {
 		orders: UnifiedOrder[];
-		formatCurrency: (cents: number) => string;
 	}
 
-	let { orders, formatCurrency }: Props = $props();
+	let { orders }: Props = $props();
 
 	let currentPage = $state(1);
 	const pageSize = 20;
