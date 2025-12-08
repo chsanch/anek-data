@@ -4,9 +4,10 @@
 
 	interface Props {
 		orders: UnifiedOrder[];
+		loading?: boolean;
 	}
 
-	let { orders }: Props = $props();
+	let { orders, loading = false }: Props = $props();
 
 	let currentPage = $state(1);
 	const pageSize = 20;
@@ -84,37 +85,52 @@
 			</tr>
 		</thead>
 		<tbody>
-			{#each paginatedOrders as order (order.id)}
+			{#if loading}
 				<tr>
-					<td class="cell-reference">{order.reference}</td>
-					<td>
-						<span class="badge {getTypeClass(order.fxOrderType)}">
-							{order.fxOrderType}
-						</span>
+					<td colspan="9" class="cell-loading">
+						<div class="loading-spinner"></div>
+						<span>Loading orders...</span>
 					</td>
-					<td>
-						<span class="direction" class:buy={order.marketDirection === 'buy'} class:sell={order.marketDirection === 'sell'}>
-							{order.marketDirection.toUpperCase()}
-						</span>
-					</td>
-					<td class="cell-amount">
-						<span class="amount">{formatCurrency(order.buyAmountCents)}</span>
-						<span class="currency">{order.buyCurrency}</span>
-					</td>
-					<td class="cell-amount">
-						<span class="amount">{formatCurrency(order.sellAmountCents)}</span>
-						<span class="currency">{order.sellCurrency}</span>
-					</td>
-					<td class="cell-rate">{order.rate.toFixed(4)}</td>
-					<td class="cell-date">{order.valueDate}</td>
-					<td>
-						<span class="status {getStatusClass(order.status)}">
-							{order.status.replace(/_/g, ' ')}
-						</span>
-					</td>
-					<td class="cell-lp">{order.liquidityProvider}</td>
 				</tr>
-			{/each}
+			{:else if paginatedOrders.length === 0}
+				<tr>
+					<td colspan="9" class="cell-empty">
+						No orders found
+					</td>
+				</tr>
+			{:else}
+				{#each paginatedOrders as order (order.id)}
+					<tr>
+						<td class="cell-reference">{order.reference}</td>
+						<td>
+							<span class="badge {getTypeClass(order.fxOrderType)}">
+								{order.fxOrderType}
+							</span>
+						</td>
+						<td>
+							<span class="direction" class:buy={order.marketDirection === 'buy'} class:sell={order.marketDirection === 'sell'}>
+								{order.marketDirection.toUpperCase()}
+							</span>
+						</td>
+						<td class="cell-amount">
+							<span class="amount">{formatCurrency(order.buyAmountCents)}</span>
+							<span class="currency">{order.buyCurrency}</span>
+						</td>
+						<td class="cell-amount">
+							<span class="amount">{formatCurrency(order.sellAmountCents)}</span>
+							<span class="currency">{order.sellCurrency}</span>
+						</td>
+						<td class="cell-rate">{order.rate.toFixed(4)}</td>
+						<td class="cell-date">{order.valueDate}</td>
+						<td>
+							<span class="status {getStatusClass(order.status)}">
+								{order.status.replace(/_/g, ' ')}
+							</span>
+						</td>
+						<td class="cell-lp">{order.liquidityProvider}</td>
+					</tr>
+				{/each}
+			{/if}
 		</tbody>
 	</table>
 </div>
@@ -369,5 +385,36 @@
 		padding: 0 8px;
 		font-size: 12px;
 		color: var(--text-muted);
+	}
+
+	/* Loading and Empty States */
+	.cell-loading,
+	.cell-empty {
+		text-align: center;
+		padding: 48px 16px !important;
+		color: var(--text-muted);
+		font-size: 14px;
+	}
+
+	.cell-loading {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.loading-spinner {
+		width: 24px;
+		height: 24px;
+		border: 2px solid var(--border-primary);
+		border-top-color: var(--accent-primary);
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 </style>
