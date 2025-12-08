@@ -1,11 +1,27 @@
 import * as duckdb from '@duckdb/duckdb-wasm';
+import duckdb_wasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url';
+import duckdb_wasm_eh from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
+import duckdb_worker from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url';
+import duckdb_worker_eh from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
 
 let db: duckdb.AsyncDuckDB | null = null;
 let initPromise: Promise<duckdb.AsyncDuckDB> | null = null;
 
+// Manual bundle configuration for Vite compatibility
+const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
+	mvp: {
+		mainModule: duckdb_wasm,
+		mainWorker: duckdb_worker
+	},
+	eh: {
+		mainModule: duckdb_wasm_eh,
+		mainWorker: duckdb_worker_eh
+	}
+};
+
 /**
  * Initialize DuckDB WASM singleton
- * Uses jsdelivr bundles for loading the WASM modules
+ * Uses local bundles for Vite compatibility (avoids CORS issues with CDN)
  * Returns existing instance if already initialized
  */
 export async function initDuckDB(): Promise<duckdb.AsyncDuckDB> {
@@ -17,8 +33,8 @@ export async function initDuckDB(): Promise<duckdb.AsyncDuckDB> {
 
 	// Start initialization
 	initPromise = (async () => {
-		const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
-		const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+		// Select the best bundle for the current browser
+		const bundle = await duckdb.selectBundle(MANUAL_BUNDLES);
 
 		const worker = new Worker(bundle.mainWorker!);
 		const logger = new duckdb.ConsoleLogger();

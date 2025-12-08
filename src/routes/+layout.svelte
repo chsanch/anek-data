@@ -3,6 +3,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import DataProvider from '$lib/components/DataProvider.svelte';
 
 	let { children } = $props();
 
@@ -30,4 +31,6 @@
 	</script>`}
 </svelte:head>
 
-{@render children()}
+<DataProvider>
+	{@render children()}
+</DataProvider>
