@@ -58,12 +58,14 @@ const COLUMN_MAP: Record<string, string> = {
 /**
  * Query paginated orders from the database
  * Supports custom sorting via sortConfig parameter
+ * Supports reference search via referenceSearch parameter (SQL ILIKE)
  */
 export async function getPaginatedOrders(
 	db: AsyncDuckDB,
 	limit: number,
 	offset: number,
-	sortConfig?: SortConfig
+	sortConfig?: SortConfig,
+	referenceSearch?: string
 ): Promise<UnifiedOrder[]> {
 	const conn = await db.connect();
 	try {
@@ -75,6 +77,14 @@ export async function getPaginatedOrders(
 				const direction = sortConfig.direction.toUpperCase();
 				orderBy = `${dbColumn} ${direction}, id ${direction}`;
 			}
+		}
+
+		// Build WHERE clause for reference search
+		let whereClause = '';
+		if (referenceSearch && referenceSearch.trim()) {
+			// Escape single quotes in search term to prevent SQL injection
+			const sanitized = referenceSearch.trim().replace(/'/g, "''");
+			whereClause = `WHERE reference ILIKE '%${sanitized}%'`;
 		}
 
 		const result = await conn.query(`
@@ -94,6 +104,7 @@ export async function getPaginatedOrders(
 				status,
 				liquidity_provider
 			FROM orders
+			${whereClause}
 			ORDER BY ${orderBy}
 			LIMIT ${limit} OFFSET ${offset}
 		`);
@@ -106,11 +117,19 @@ export async function getPaginatedOrders(
 
 /**
  * Get total count of orders for pagination
+ * Supports reference search filter to get accurate count for filtered results
  */
-export async function getTotalOrderCount(db: AsyncDuckDB): Promise<number> {
+export async function getTotalOrderCount(db: AsyncDuckDB, referenceSearch?: string): Promise<number> {
 	const conn = await db.connect();
 	try {
-		const result = await conn.query('SELECT COUNT(*) as total_count FROM orders');
+		// Build WHERE clause for reference search
+		let whereClause = '';
+		if (referenceSearch && referenceSearch.trim()) {
+			const sanitized = referenceSearch.trim().replace(/'/g, "''");
+			whereClause = `WHERE reference ILIKE '%${sanitized}%'`;
+		}
+
+		const result = await conn.query(`SELECT COUNT(*) as total_count FROM orders ${whereClause}`);
 		const row = result.toArray()[0];
 		return Number(row.total_count);
 	} finally {

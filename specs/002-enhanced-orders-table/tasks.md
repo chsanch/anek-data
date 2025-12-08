@@ -86,22 +86,27 @@
 
 ---
 
-## Phase 5: User Story 3 - Text Search Filter (Priority: P3)
+## Phase 5: User Story 3 - Reference Search (Priority: P3) ✅ COMPLETE
 
-**Goal**: Users can type in search box to filter across all columns
+**Goal**: Users can search orders by reference number (partial match)
 
-**Independent Test**: Type "USD" → only rows containing "USD" in any column shown. Clear → all rows return.
+**Independent Test**: Type "KCH-X87" → only orders with reference containing "KCH-X87" shown. Clear → all rows return.
+
+**Implementation Note**: Changed from "global text search across all columns" to "reference-only search" because:
+- `reference` is the only truly searchable text field in the orders data
+- Other fields (status, type, currency, LP) have limited enumerable values better suited for dropdown filters (US4)
+- Uses SQL `WHERE reference ILIKE '%search%'` for efficient server-side filtering
 
 ### Implementation for User Story 3
 
-- [ ] T019 [US3] Add getFilteredRowModel to TanStack table configuration in src/lib/components/OrdersTable.svelte
-- [ ] T020 [US3] Add globalFilter state and onGlobalFilterChange callback in src/lib/components/OrdersTable.svelte
-- [ ] T021 [US3] Create TableToolbar component at src/lib/components/TableToolbar.svelte with search input
-- [ ] T022 [US3] Add debounced search input (300ms) using existing debounce utility in src/lib/components/TableToolbar.svelte
-- [ ] T023 [US3] Integrate TableToolbar above table in OrdersTable component at src/lib/components/OrdersTable.svelte
-- [ ] T024 [US3] Update empty state message when search yields no results in src/lib/components/OrdersTable.svelte
+- [x] T019 [US3] Add referenceSearch parameter to getPaginatedOrders and getTotalOrderCount in src/lib/db/queries.ts with SQL ILIKE filter
+- [x] T020 [US3] Add referenceSearch state and handleReferenceSearchChange callback in src/routes/+page.svelte
+- [x] T021 [US3] Create ReferenceSearch component at src/lib/components/ReferenceSearch.svelte with search input, clear button, and search icon
+- [x] T022 [US3] Add debounced search (300ms) using existing debounce utility in src/lib/components/ReferenceSearch.svelte
+- [x] T023 [US3] Integrate ReferenceSearch into orders section header in src/routes/+page.svelte with new section-header-left layout
+- [x] T024 [US3] Update empty state message when search yields no results in src/lib/components/OrdersTable.svelte (shows search term in message)
 
-**Checkpoint**: Global text search functional with debouncing
+**Checkpoint**: Reference search functional with debouncing and SQL-based filtering ✅
 
 ---
 

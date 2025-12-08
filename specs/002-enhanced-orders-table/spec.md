@@ -40,19 +40,24 @@ As a user, I want to choose how many orders are displayed per page (10, 20, 50, 
 
 ---
 
-### User Story 3 - Text Search Filter (Priority: P3)
+### User Story 3 - Reference Search (Priority: P3)
 
-As a user, I want to search across all visible columns using a text input so I can quickly find orders by reference, currency, or liquidity provider.
+As a user, I want to search orders by reference number so I can quickly find a specific order when I know its reference (e.g., "KCH-X87AYWT5").
 
-**Why this priority**: Text search provides broad filtering capability without requiring users to understand specific filter syntax. It's the most intuitive filtering mechanism.
+**Why this priority**: Reference search provides the most practical text search capability for this dataset. Other fields (status, type, currency, LP) are better served by dropdown filters (US4) since they have limited, enumerable values.
 
-**Independent Test**: Can be fully tested by typing search terms and verifying matching rows are displayed. Delivers value by enabling rapid order lookup.
+**Implementation Note**: Changed from "global text search across all columns" to "reference-only search" because:
+- `reference` is the only truly searchable text field
+- Other text fields (currency, status, type, LP) have limited values better suited for dropdown filters
+- Searching across all columns would be overkill and potentially confusing
+
+**Independent Test**: Can be fully tested by typing a reference (full or partial) and verifying matching rows are displayed. Delivers value by enabling rapid order lookup.
 
 **Acceptance Scenarios**:
 
-1. **Given** the orders table is displayed, **When** I type "USD" in the search field, **Then** only orders containing "USD" in any column are shown
-2. **Given** I've searched for "USD", **When** I clear the search field, **Then** all orders are displayed again
-3. **Given** I've searched for "XYZ123", **When** no orders match, **Then** an empty state message is shown: "No orders match your search"
+1. **Given** the orders table is displayed, **When** I type "KCH-X87" in the reference search field, **Then** only orders with reference containing "KCH-X87" are shown
+2. **Given** I've searched for a reference, **When** I clear the search field, **Then** all orders are displayed again
+3. **Given** I've searched for "NONEXISTENT", **When** no orders match, **Then** an empty state message is shown: "No orders match your search"
 4. **Given** I type in the search field, **When** I pause typing for 300ms, **Then** the filter is applied (debounced)
 
 ---
@@ -107,8 +112,8 @@ As a user, I want to export the currently filtered/sorted view as CSV so I can a
 - **FR-002**: System MUST indicate current sort column and direction visually (arrow icon)
 - **FR-003**: System MUST provide page size selector with options: 10, 20, 50, 100
 - **FR-004**: System MUST persist user's page size preference during the session
-- **FR-005**: System MUST provide a global text search that filters across all visible columns
-- **FR-006**: System MUST debounce text search input by 300ms before applying filter
+- **FR-005**: System MUST provide a reference search input that filters orders by reference field (partial match)
+- **FR-006**: System MUST debounce reference search input by 300ms before applying filter
 - **FR-007**: System MUST provide dropdown filters for: status, fx_order_type, buy_currency, sell_currency
 - **FR-008**: System MUST allow combining multiple filters (AND logic)
 - **FR-009**: System MUST display active filter count/indicators

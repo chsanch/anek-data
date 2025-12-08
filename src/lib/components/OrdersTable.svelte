@@ -23,6 +23,7 @@
 		onPageSizeChange?: (size: number) => void;
 		onSortChange?: (sort: SortConfig | undefined) => void;
 		currentSort?: SortConfig;
+		searchTerm?: string;
 	}
 
 	let {
@@ -34,7 +35,8 @@
 		onPageChange,
 		onPageSizeChange,
 		onSortChange,
-		currentSort
+		currentSort,
+		searchTerm = ''
 	}: Props = $props();
 
 	// Convert currentSort prop to TanStack SortingState format
@@ -179,11 +181,19 @@
 			{:else if table.getRowModel().rows.length === 0}
 				<tr>
 					<td colspan="9" class="cell-empty">
-						<EmptyState
-							title="No orders found"
-							message="There are no orders matching your criteria."
-							icon="search"
-						/>
+						{#if searchTerm}
+							<EmptyState
+								title="No orders match your search"
+								message={`No orders found with reference containing "${searchTerm}". Try a different search term.`}
+								icon="search"
+							/>
+						{:else}
+							<EmptyState
+								title="No orders found"
+								message="There are no orders matching your criteria."
+								icon="search"
+							/>
+						{/if}
 					</td>
 				</tr>
 			{:else}

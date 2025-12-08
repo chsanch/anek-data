@@ -7,6 +7,7 @@
 	import ErrorMessage from '$lib/components/ErrorMessage.svelte';
 	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import ExportModal from '$lib/components/ExportModal.svelte';
+	import ReferenceSearch from '$lib/components/ReferenceSearch.svelte';
 	import type { ExportOptions } from '$lib/components/ExportModal.svelte';
 	import { formatCompact } from '$lib/utils/format';
 	import { QueryCache } from '$lib/utils/debounce';
@@ -39,6 +40,9 @@
 	// Sorting state
 	let currentSort = $state<SortConfig | undefined>(undefined);
 
+	// Reference search state
+	let referenceSearch = $state('');
+
 	// Orders state
 	let orders: UnifiedOrder[] = $state([]);
 	let totalOrders = $state(0);
@@ -62,21 +66,21 @@
 	// Load data when initialized
 	$effect(() => {
 		if (dataContext.state.initialized && dataContext.db) {
-			loadOrders(currentPage, pageSize, currentSort);
+			loadOrders(currentPage, pageSize, currentSort, referenceSearch);
 			loadStats();
 			loadVolumeByCurrency();
 		}
 	});
 
-	async function loadOrders(page: number, size: number, sort?: SortConfig) {
+	async function loadOrders(page: number, size: number, sort?: SortConfig, search?: string) {
 		if (!dataContext.db) return;
 
 		ordersLoading = true;
 		try {
 			const offset = (page - 1) * size;
 			const [fetchedOrders, count] = await Promise.all([
-				getPaginatedOrders(dataContext.db, size, offset, sort),
-				getTotalOrderCount(dataContext.db)
+				getPaginatedOrders(dataContext.db, size, offset, sort, search),
+				getTotalOrderCount(dataContext.db, search)
 			]);
 			orders = fetchedOrders;
 			totalOrders = count;
@@ -89,19 +93,25 @@
 
 	function handlePageChange(page: number) {
 		currentPage = page;
-		loadOrders(page, pageSize, currentSort);
+		loadOrders(page, pageSize, currentSort, referenceSearch);
 	}
 
 	function handleSortChange(sort: SortConfig | undefined) {
 		currentSort = sort;
 		currentPage = 1; // Reset to first page when sorting changes
-		loadOrders(1, pageSize, sort);
+		loadOrders(1, pageSize, sort, referenceSearch);
 	}
 
 	function handlePageSizeChange(size: number) {
 		pageSize = size;
 		currentPage = 1; // Reset to first page when page size changes
-		loadOrders(1, size, currentSort);
+		loadOrders(1, size, currentSort, referenceSearch);
+	}
+
+	function handleReferenceSearchChange(search: string) {
+		referenceSearch = search;
+		currentPage = 1; // Reset to first page when search changes
+		loadOrders(1, pageSize, currentSort, search);
 	}
 
 	async function loadStats(useCache = true) {
@@ -162,7 +172,7 @@
 		await dataContext.refresh();
 		// Reset to first page on refresh and reload all data (bypassing cache)
 		currentPage = 1;
-		loadOrders(1, pageSize, currentSort);
+		loadOrders(1, pageSize, currentSort, referenceSearch);
 		loadStats(false);
 		loadVolumeByCurrency(false);
 	}
@@ -306,7 +316,13 @@
 		<!-- Orders Table -->
 		<section class="orders-section">
 			<div class="section-header">
-				<h2 class="section-title">Unified Orders</h2>
+				<div class="section-header-left">
+					<h2 class="section-title">Unified Orders</h2>
+					<ReferenceSearch
+						value={referenceSearch}
+						onChange={handleReferenceSearchChange}
+					/>
+				</div>
 				<div class="section-actions">
 					<RefreshButton
 						onclick={handleRefresh}
@@ -340,6 +356,7 @@
 					onPageSizeChange={handlePageSizeChange}
 					onSortChange={handleSortChange}
 					currentSort={currentSort}
+					searchTerm={referenceSearch}
 				/>
 			{/if}
 		</section>
@@ -618,6 +635,12 @@
 
 	.section-header .section-title {
 		margin: 0;
+	}
+
+	.section-header-left {
+		display: flex;
+		align-items: center;
+		gap: 16px;
 	}
 
 	.section-actions {
