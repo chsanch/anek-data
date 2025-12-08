@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { UnifiedOrder } from '$lib/types/orders';
-	import { formatCurrency } from '$lib/utils/format';
+	import { formatCurrency, formatDate } from '$lib/utils/format';
 	import Skeleton from './Skeleton.svelte';
 	import EmptyState from './EmptyState.svelte';
 
@@ -150,7 +150,7 @@
 							<span class="currency">{order.sellCurrency}</span>
 						</td>
 						<td class="cell-rate">{order.rate.toFixed(4)}</td>
-						<td class="cell-date">{order.valueDate}</td>
+						<td class="cell-date">{formatDate(order.valueDate)}</td>
 						<td>
 							<span class="status {getStatusClass(order.status)}">
 								{order.status.replace(/_/g, ' ')}

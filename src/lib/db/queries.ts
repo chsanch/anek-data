@@ -89,9 +89,9 @@ function mapRowToOrder(row: Record<string, unknown>): UnifiedOrder {
 		buyCurrency: String(row.buy_currency),
 		sellCurrency: String(row.sell_currency),
 		rate: Number(row.rate),
-		valueDate: formatDate(row.value_date),
-		creationDate: formatDate(row.creation_date),
-		executionDate: row.execution_date ? formatDate(row.execution_date) : null,
+		valueDate: formatDateFromDb(row.value_date),
+		creationDate: formatDateFromDb(row.creation_date),
+		executionDate: row.execution_date ? formatDateFromDb(row.execution_date) : null,
 		status: String(row.status) as UnifiedOrder['status'],
 		liquidityProvider: String(row.liquidity_provider)
 	};
@@ -99,12 +99,39 @@ function mapRowToOrder(row: Record<string, unknown>): UnifiedOrder {
 
 /**
  * Format date value from DuckDB to ISO string
+ * DuckDB can return dates as Date objects, timestamps (numbers), or strings
  */
-function formatDate(value: unknown): string {
+function formatDateFromDb(value: unknown): string {
+	if (value === null || value === undefined) {
+		return '';
+	}
+
+	// Handle Date objects
 	if (value instanceof Date) {
 		return value.toISOString().split('T')[0];
 	}
-	return String(value);
+
+	// Handle numeric timestamps (milliseconds from epoch)
+	if (typeof value === 'number' || typeof value === 'bigint') {
+		const timestamp = typeof value === 'bigint' ? Number(value) : value;
+		const date = new Date(timestamp);
+		if (!isNaN(date.getTime())) {
+			return date.toISOString().split('T')[0];
+		}
+	}
+
+	// Handle string dates (already formatted or ISO strings)
+	const strValue = String(value);
+
+	// If it looks like a numeric string (timestamp), convert it
+	if (/^\d+$/.test(strValue)) {
+		const date = new Date(Number(strValue));
+		if (!isNaN(date.getTime())) {
+			return date.toISOString().split('T')[0];
+		}
+	}
+
+	return strValue;
 }
 
 /**
