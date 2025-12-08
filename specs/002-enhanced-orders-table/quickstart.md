@@ -24,14 +24,14 @@ pnpm dev
 
 ## Key Files to Modify
 
-| File | Purpose |
-|------|---------|
-| `src/lib/components/OrdersTable.svelte` | Main table component - integrate TanStack |
-| `src/lib/components/TableToolbar.svelte` | NEW: Search, filters, page size controls |
-| `src/lib/components/FilterDropdown.svelte` | NEW: Column filter dropdown component |
-| `src/lib/components/ExportModal.svelte` | MODIFY: Add filtered export option |
-| `src/lib/types/table.ts` | NEW: Table state types |
-| `src/routes/+page.svelte` | Wire up enhanced table |
+| File                                       | Purpose                                   |
+| ------------------------------------------ | ----------------------------------------- |
+| `src/lib/components/OrdersTable.svelte`    | Main table component - integrate TanStack |
+| `src/lib/components/TableToolbar.svelte`   | NEW: Search, filters, page size controls  |
+| `src/lib/components/FilterDropdown.svelte` | NEW: Column filter dropdown component     |
+| `src/lib/components/ExportModal.svelte`    | MODIFY: Add filtered export option        |
+| `src/lib/types/table.ts`                   | NEW: Table state types                    |
+| `src/routes/+page.svelte`                  | Wire up enhanced table                    |
 
 ## Implementation Order
 
@@ -70,35 +70,41 @@ pnpm dev
 
 ```svelte
 <script lang="ts">
-  import {
-    createSvelteTable,
-    getCoreRowModel,
-    getSortedRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    type SortingState
-  } from '@tanstack/svelte-table';
+	import {
+		createSvelteTable,
+		getCoreRowModel,
+		getSortedRowModel,
+		getFilteredRowModel,
+		getPaginationRowModel,
+		type SortingState
+	} from '@tanstack/svelte-table';
 
-  let { orders } = $props();
+	let { orders } = $props();
 
-  let sorting = $state<SortingState>([]);
-  let globalFilter = $state('');
+	let sorting = $state<SortingState>([]);
+	let globalFilter = $state('');
 
-  const table = createSvelteTable({
-    get data() { return orders; },
-    columns: columnDefs,
-    state: {
-      get sorting() { return sorting; },
-      get globalFilter() { return globalFilter; }
-    },
-    onSortingChange: (updater) => {
-      sorting = typeof updater === 'function' ? updater(sorting) : updater;
-    },
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
+	const table = createSvelteTable({
+		get data() {
+			return orders;
+		},
+		columns: columnDefs,
+		state: {
+			get sorting() {
+				return sorting;
+			},
+			get globalFilter() {
+				return globalFilter;
+			}
+		},
+		onSortingChange: (updater) => {
+			sorting = typeof updater === 'function' ? updater(sorting) : updater;
+		},
+		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
+		getPaginationRowModel: getPaginationRowModel()
+	});
 </script>
 ```
 
@@ -106,10 +112,10 @@ pnpm dev
 
 ```svelte
 <th onclick={() => header.column.getToggleSortingHandler()}>
-  {header.column.columnDef.header}
-  {#if header.column.getIsSorted()}
-    {header.column.getIsSorted() === 'asc' ? '↑' : '↓'}
-  {/if}
+	{header.column.columnDef.header}
+	{#if header.column.getIsSorted()}
+		{header.column.getIsSorted() === 'asc' ? '↑' : '↓'}
+	{/if}
 </th>
 ```
 
@@ -117,10 +123,10 @@ pnpm dev
 
 ```svelte
 <select onchange={(e) => column.setFilterValue(e.target.value || undefined)}>
-  <option value="">All</option>
-  {#each options as option}
-    <option value={option}>{option}</option>
-  {/each}
+	<option value="">All</option>
+	{#each options as option}
+		<option value={option}>{option}</option>
+	{/each}
 </select>
 ```
 
@@ -150,6 +156,7 @@ pnpm test:e2e
 ### TanStack not updating on data change
 
 Ensure data is passed reactively:
+
 ```typescript
 // Wrong
 const table = createSvelteTable({ data: orders, ... });

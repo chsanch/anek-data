@@ -26,20 +26,21 @@ python serve.py
 ```
 
 Then set in `.env`:
+
 ```bash
 PUBLIC_PARQUET_URL=http://localhost:8080/orders.parquet
 ```
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start dev server |
-| `pnpm build` | Build for production |
-| `pnpm check` | TypeScript check |
-| `pnpm lint` | Lint code |
-| `pnpm format` | Format code |
-| `pnpm test:unit` | Run tests |
+| Command          | Description          |
+| ---------------- | -------------------- |
+| `pnpm dev`       | Start dev server     |
+| `pnpm build`     | Build for production |
+| `pnpm check`     | TypeScript check     |
+| `pnpm lint`      | Lint code            |
+| `pnpm format`    | Format code          |
+| `pnpm test:unit` | Run tests            |
 
 ## Tech Stack
 

@@ -125,8 +125,8 @@
 
 	let isValid = $derived(
 		exportType === 'all' ||
-		exportType === 'filtered' ||
-		(exportType === 'date-range' && startDate && endDate && startDate <= endDate)
+			exportType === 'filtered' ||
+			(exportType === 'date-range' && startDate && endDate && startDate <= endDate)
 	);
 </script>
 
@@ -139,42 +139,31 @@
 		<div class="option-group">
 			{#if hasActiveFilters}
 				<label class="radio-option highlighted">
-					<input
-						type="radio"
-						name="export-type"
-						value="filtered"
-						bind:group={exportType}
-					/>
+					<input type="radio" name="export-type" value="filtered" bind:group={exportType} />
 					<span class="radio-label">
 						<span class="radio-title">
 							Export current view
 							<span class="filtered-badge">{filteredCount.toLocaleString()} rows</span>
 						</span>
-						<span class="radio-description">Export orders matching your current filters and sort order</span>
+						<span class="radio-description"
+							>Export orders matching your current filters and sort order</span
+						>
 					</span>
 				</label>
 			{/if}
 
 			<label class="radio-option">
-				<input
-					type="radio"
-					name="export-type"
-					value="all"
-					bind:group={exportType}
-				/>
+				<input type="radio" name="export-type" value="all" bind:group={exportType} />
 				<span class="radio-label">
 					<span class="radio-title">Export all orders</span>
-					<span class="radio-description">Download all {totalOrders.toLocaleString()} orders in the database</span>
+					<span class="radio-description"
+						>Download all {totalOrders.toLocaleString()} orders in the database</span
+					>
 				</span>
 			</label>
 
 			<label class="radio-option">
-				<input
-					type="radio"
-					name="export-type"
-					value="date-range"
-					bind:group={exportType}
-				/>
+				<input type="radio" name="export-type" value="date-range" bind:group={exportType} />
 				<span class="radio-label">
 					<span class="radio-title">Filter by date range</span>
 					<span class="radio-description">Export orders within a specific creation date range</span>
@@ -186,19 +175,11 @@
 			<div class="date-range-inputs">
 				<div class="date-field">
 					<label for="start-date">Start Date</label>
-					<input
-						type="date"
-						id="start-date"
-						bind:value={startDate}
-					/>
+					<input type="date" id="start-date" bind:value={startDate} />
 				</div>
 				<div class="date-field">
 					<label for="end-date">End Date</label>
-					<input
-						type="date"
-						id="end-date"
-						bind:value={endDate}
-					/>
+					<input type="date" id="end-date" bind:value={endDate} />
 				</div>
 			</div>
 			{#if startDate && endDate && startDate > endDate}
@@ -215,7 +196,14 @@
 				</span>
 			{:else if previewCount !== null}
 				<span class="count-value">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
 						<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
 						<polyline points="14 2 14 8 20 8" />
 						<line x1="16" y1="13" x2="8" y2="13" />
@@ -229,19 +217,20 @@
 	</div>
 
 	{#snippet footer()}
-		<button class="btn-cancel" onclick={onclose} disabled={exporting}>
-			Cancel
-		</button>
-		<button
-			class="btn-export"
-			onclick={handleExport}
-			disabled={!isValid || exporting}
-		>
+		<button class="btn-cancel" onclick={onclose} disabled={exporting}> Cancel </button>
+		<button class="btn-export" onclick={handleExport} disabled={!isValid || exporting}>
 			{#if exporting}
 				<span class="spinner"></span>
 				Exporting...
 			{:else}
-				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+				>
 					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
 					<polyline points="7 10 12 15 17 10" />
 					<line x1="12" y1="15" x2="12" y2="3" />
@@ -292,7 +281,7 @@
 		background: var(--accent-primary-muted);
 	}
 
-	.radio-option input[type="radio"] {
+	.radio-option input[type='radio'] {
 		margin-top: 2px;
 		accent-color: var(--accent-primary);
 	}
@@ -351,7 +340,7 @@
 		color: var(--text-secondary);
 	}
 
-	.date-field input[type="date"] {
+	.date-field input[type='date'] {
 		padding: 10px 12px;
 		background: var(--bg-tertiary);
 		border: 1px solid var(--border-primary);
@@ -361,7 +350,7 @@
 		transition: border-color 0.15s ease;
 	}
 
-	.date-field input[type="date"]:focus {
+	.date-field input[type='date']:focus {
 		outline: none;
 		border-color: var(--accent-primary);
 	}

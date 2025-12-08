@@ -31,11 +31,11 @@
 
 ## Validation Summary
 
-| Category | Status | Notes |
-|----------|--------|-------|
-| Content Quality | PASS | Spec focuses on user needs without implementation details |
-| Requirement Completeness | PASS | All requirements testable, no clarifications needed |
-| Feature Readiness | PASS | Ready for planning phase |
+| Category                 | Status | Notes                                                     |
+| ------------------------ | ------ | --------------------------------------------------------- |
+| Content Quality          | PASS   | Spec focuses on user needs without implementation details |
+| Requirement Completeness | PASS   | All requirements testable, no clarifications needed       |
+| Feature Readiness        | PASS   | Ready for planning phase                                  |
 
 ## Notes
 

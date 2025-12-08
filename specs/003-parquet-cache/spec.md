@@ -5,7 +5,7 @@
 **Status**: Draft
 **Input**: User description: "Cache parquet file in IndexedDB with time-based + ETag invalidation to avoid downloading on every page load"
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Fast Page Load with Cached Data (Priority: P1)
 
@@ -79,7 +79,7 @@ As a system operator, I want the application to efficiently validate cache fresh
 - What happens if the server is unreachable but cache exists? The system should use cached data even if expired, with a warning that data may be stale.
 - What happens if the server removes ETag support? The system should fall back to time-based expiry only.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -100,7 +100,7 @@ As a system operator, I want the application to efficiently validate cache fresh
 - **CachedParquet**: Represents stored parquet data with metadata (source URL, raw data buffer, download timestamp, expiry timestamp, file size, ETag)
 - **CacheStatus**: Represents current cache state (valid/expired/missing/loading) and metadata for UI display
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

@@ -6,6 +6,7 @@
 ## User Stories Completion
 
 ### P1 - Column Sorting
+
 - [ ] Clicking column header sorts ascending
 - [ ] Clicking same header toggles to descending
 - [ ] Clicking different header clears previous sort
@@ -13,6 +14,7 @@
 - [ ] Sort works while data is loading (queued)
 
 ### P2 - Page Size Control
+
 - [ ] Page size dropdown with options: 10, 20, 50, 100
 - [ ] Changing page size updates displayed rows
 - [ ] Changing page size resets to page 1
@@ -20,6 +22,7 @@
 - [ ] Page size persists during session
 
 ### P3 - Text Search Filter
+
 - [ ] Search input field visible in table toolbar
 - [ ] Typing filters across all visible columns
 - [ ] Clearing search shows all orders
@@ -27,6 +30,7 @@
 - [ ] Search is debounced (300ms)
 
 ### P4 - Column-Specific Filters
+
 - [ ] Status filter dropdown
 - [ ] Order type filter dropdown
 - [ ] Buy currency filter dropdown
@@ -36,6 +40,7 @@
 - [ ] "Clear all filters" button works
 
 ### P5 - Export Filtered Results
+
 - [ ] Export modal shows filtered count when filters active
 - [ ] "Export filtered results" option available
 - [ ] Exported CSV contains only filtered data

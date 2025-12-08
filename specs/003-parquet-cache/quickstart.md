@@ -30,6 +30,7 @@ PUBLIC_CACHE_TTL=3600000  # 1 hour in milliseconds (default)
 ### Step 1: Cache Types (`src/lib/db/cache-types.ts`)
 
 Define TypeScript interfaces for cache entities:
+
 - `CachedParquet` - stored entry structure
 - `CacheMetadata` - metadata without binary data
 - `CacheStatus` - runtime status for UI
@@ -38,6 +39,7 @@ Define TypeScript interfaces for cache entities:
 ### Step 2: Cache Service (`src/lib/db/cache.ts`)
 
 Implement `ParquetCacheService` class:
+
 - `init()` - open IndexedDB
 - `isCacheValid(url)` - check TTL expiry
 - `getMetadata(url)` - get metadata without data
@@ -48,6 +50,7 @@ Implement `ParquetCacheService` class:
 ### Step 3: Update Loader (`src/lib/db/loader.ts`)
 
 Modify `loadParquetFromUrl` to:
+
 1. Accept cache service instance
 2. Check cache before network fetch
 3. Store successful fetches in cache
@@ -56,6 +59,7 @@ Modify `loadParquetFromUrl` to:
 ### Step 4: Update DataProvider (`src/lib/components/DataProvider.svelte`)
 
 Integrate cache service:
+
 1. Initialize cache service on mount
 2. Use cache-aware loading
 3. Expose `cacheStatus` in context
@@ -64,6 +68,7 @@ Integrate cache service:
 ### Step 5: Cache Indicator (`src/lib/components/CacheIndicator.svelte`)
 
 Create UI component:
+
 1. Consume cache status from context
 2. Display "Cached • Last updated: X" or loading state
 3. Include refresh button
@@ -110,16 +115,19 @@ describe('ParquetCacheService', () => {
 ## Troubleshooting
 
 ### Cache not persisting
+
 - Check browser DevTools > Application > IndexedDB
 - Verify `anec-data-cache` database exists
 - Ensure not in private/incognito mode
 
 ### Network requests still occurring
+
 - Verify TTL hasn't expired (default 1 hour)
 - Check console for cache errors
 - Confirm URL matches cached entry exactly
 
 ### IndexedDB errors
+
 - Clear site data and reload
 - Check storage quota in DevTools
 - Review console for specific error messages

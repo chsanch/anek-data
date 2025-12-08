@@ -95,11 +95,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Add forceRefresh option to loadData() in src/lib/db/cache.ts - bypass cache check when true
-- [ ] T023 [US3] Add forceRefresh() method to DataProvider.svelte context - calls loadData with forceRefresh: true
-- [ ] T024 [US3] Add refresh button to CacheIndicator.svelte that calls forceRefresh()
-- [ ] T025 [US3] Disable refresh button during loading state in CacheIndicator.svelte
-- [ ] T026 [US3] Update cache indicator timestamp after successful refresh in DataProvider.svelte
+- [x] T022 [US3] Add forceRefresh option to loadData() in src/lib/db/cache.ts - bypass cache check when true
+- [x] T023 [US3] Add forceRefresh() method to DataProvider.svelte context - calls loadData with forceRefresh: true
+- [x] T024 [US3] Add refresh button to CacheIndicator.svelte that calls forceRefresh()
+- [x] T025 [US3] Disable refresh button during loading state in CacheIndicator.svelte
+- [x] T026 [US3] Update cache indicator timestamp after successful refresh in DataProvider.svelte
 
 **Checkpoint**: User Story 3 complete - users can force data refresh at any time
 
@@ -113,11 +113,11 @@
 
 ### Implementation for User Story 4
 
-- [ ] T027 [US4] Extract and store ETag from response headers in src/lib/db/cache.ts storeCache()
-- [ ] T028 [US4] Implement conditional fetch with If-None-Match header in src/lib/db/cache.ts loadData()
-- [ ] T029 [US4] Handle 304 Not Modified response - extend cache TTL without re-downloading in src/lib/db/cache.ts
-- [ ] T030 [US4] Handle new data response (200) - update cache with new data and ETag in src/lib/db/cache.ts
-- [ ] T031 [US4] Fallback to full fetch when no ETag available in src/lib/db/cache.ts
+- [x] T027 [US4] Extract and store ETag from response headers in src/lib/db/cache.ts storeCache()
+- [x] T028 [US4] Implement conditional fetch with If-None-Match header in src/lib/db/cache.ts loadData()
+- [x] T029 [US4] Handle 304 Not Modified response - extend cache TTL without re-downloading in src/lib/db/cache.ts
+- [x] T030 [US4] Handle new data response (200) - update cache with new data and ETag in src/lib/db/cache.ts
+- [x] T031 [US4] Fallback to full fetch when no ETag available in src/lib/db/cache.ts
 
 **Checkpoint**: User Story 4 complete - bandwidth saved when server data unchanged
 
@@ -127,13 +127,13 @@
 
 **Purpose**: Edge case handling and validation
 
-- [ ] T032 [P] Handle storage quota exceeded error in src/lib/db/cache.ts - log warning, skip caching
-- [ ] T033 [P] Handle corrupted cache data in src/lib/db/cache.ts - delete invalid entry, fetch fresh
-- [ ] T034 [P] Handle offline mode with valid cache in src/lib/db/cache.ts - use cache, set isStale flag
-- [ ] T035 [P] Handle offline mode with expired cache in src/lib/db/cache.ts - use expired cache, prominent warning
-- [ ] T036 Run pnpm check to verify TypeScript types
-- [ ] T037 Run pnpm lint to verify code style
-- [ ] T038 Manual verification using quickstart.md checklist
+- [x] T032 [P] Handle storage quota exceeded error in src/lib/db/cache.ts - log warning, skip caching
+- [x] T033 [P] Handle corrupted cache data in src/lib/db/cache.ts - delete invalid entry, fetch fresh
+- [x] T034 [P] Handle offline mode with valid cache in src/lib/db/cache.ts - use cache, set isStale flag
+- [x] T035 [P] Handle offline mode with expired cache in src/lib/db/cache.ts - use expired cache, prominent warning
+- [x] T036 Run pnpm check to verify TypeScript types
+- [x] T037 Run pnpm lint to verify code style
+- [x] T038 Manual verification using quickstart.md checklist
 
 ---
 
@@ -152,12 +152,12 @@
 
 ### User Story Dependencies
 
-| Story | Depends On | Can Start After |
-|-------|------------|-----------------|
-| US1 (P1) | Foundational | Phase 2 complete |
+| Story    | Depends On   | Can Start After                             |
+| -------- | ------------ | ------------------------------------------- |
+| US1 (P1) | Foundational | Phase 2 complete                            |
 | US2 (P2) | Foundational | Phase 2 complete (uses US1's cache service) |
-| US3 (P2) | Foundational | Phase 2 complete (extends US2's indicator) |
-| US4 (P3) | Foundational | Phase 2 complete (enhances US1's fetch) |
+| US3 (P2) | Foundational | Phase 2 complete (extends US2's indicator)  |
+| US4 (P3) | Foundational | Phase 2 complete (enhances US1's fetch)     |
 
 ### Within Each User Story
 

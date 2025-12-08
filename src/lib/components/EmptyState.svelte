@@ -19,13 +19,23 @@
 	const icons = {
 		data: 'M3 3h18v18H3zM8 7v10M12 7v10M16 7v10',
 		search: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
-		error: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
+		error:
+			'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'
 	};
 </script>
 
 <div class="empty-state">
 	<div class="empty-icon">
-		<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+		<svg
+			width="48"
+			height="48"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.5"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		>
 			<path d={icons[icon]} />
 		</svg>
 	</div>

@@ -3,11 +3,7 @@
 	import type { SortingState } from '@tanstack/table-core';
 	import type { SortConfig } from '$lib/db/queries';
 	import { formatCurrency, formatDate } from '$lib/utils/format';
-	import {
-		createSvelteTable,
-		getCoreRowModel,
-		FlexRender
-	} from '$lib/components/table';
+	import { createSvelteTable, getCoreRowModel, FlexRender } from '$lib/components/table';
 	import { ORDER_COLUMNS } from '$lib/types/table';
 	import Skeleton from './Skeleton.svelte';
 	import EmptyState from './EmptyState.svelte';
@@ -115,11 +111,7 @@
 		const delta = 2;
 
 		for (let i = 1; i <= totalPages; i++) {
-			if (
-				i === 1 ||
-				i === totalPages ||
-				(i >= currentPage - delta && i <= currentPage + delta)
-			) {
+			if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
 				pages.push(i);
 			} else if (pages[pages.length - 1] !== '...') {
 				pages.push('...');
@@ -155,7 +147,10 @@
 								: 'none'}
 						>
 							<span class="header-content">
-								<FlexRender content={header.column.columnDef.header} context={header.getContext()} />
+								<FlexRender
+									content={header.column.columnDef.header}
+									context={header.getContext()}
+								/>
 								{#if header.column.getCanSort()}
 									<span class="sort-indicator" class:active={header.column.getIsSorted()}>
 										{#if header.column.getIsSorted() === 'asc'}
@@ -223,7 +218,11 @@
 							</span>
 						</td>
 						<td>
-							<span class="direction" class:buy={order.marketDirection === 'buy'} class:sell={order.marketDirection === 'sell'}>
+							<span
+								class="direction"
+								class:buy={order.marketDirection === 'buy'}
+								class:sell={order.marketDirection === 'sell'}
+							>
 								{order.marketDirection.toUpperCase()}
 							</span>
 						</td>
@@ -256,7 +255,10 @@
 			<PageSizeSelector value={pageSize} onChange={onPageSizeChange} />
 		{/if}
 		<div class="pagination-info">
-			Showing {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, effectiveTotalCount)} of {effectiveTotalCount.toLocaleString()} orders
+			Showing {(currentPage - 1) * pageSize + 1} - {Math.min(
+				currentPage * pageSize,
+				effectiveTotalCount
+			)} of {effectiveTotalCount.toLocaleString()} orders
 		</div>
 	</div>
 	<div class="pagination-controls">
@@ -266,7 +268,14 @@
 			disabled={currentPage === 1}
 			aria-label="Previous page"
 		>
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<path d="M15 18l-6-6 6-6" />
 			</svg>
 		</button>
@@ -291,7 +300,14 @@
 			disabled={currentPage === totalPages}
 			aria-label="Next page"
 		>
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
 				<path d="M9 18l6-6-6-6" />
 			</svg>
 		</button>
@@ -322,7 +338,9 @@
 		border-bottom: 1px solid var(--border-primary);
 		position: sticky;
 		top: 0;
-		transition: background 0.3s ease, color 0.3s ease;
+		transition:
+			background 0.3s ease,
+			color 0.3s ease;
 	}
 
 	.orders-table th.align-right {
@@ -378,7 +396,9 @@
 		padding: 12px 16px;
 		border-bottom: 1px solid var(--border-primary);
 		color: var(--text-primary);
-		transition: color 0.3s ease, border-color 0.3s ease;
+		transition:
+			color 0.3s ease,
+			border-color 0.3s ease;
 	}
 
 	.orders-table tbody tr {
@@ -499,7 +519,9 @@
 		padding: 16px 20px;
 		border-top: 1px solid var(--border-primary);
 		background: var(--bg-tertiary);
-		transition: background 0.3s ease, border-color 0.3s ease;
+		transition:
+			background 0.3s ease,
+			border-color 0.3s ease;
 	}
 
 	.pagination-left {

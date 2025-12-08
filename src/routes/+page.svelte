@@ -5,7 +5,6 @@
 	import RefreshButton from '$lib/components/RefreshButton.svelte';
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 	import ErrorMessage from '$lib/components/ErrorMessage.svelte';
-	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import ExportModal from '$lib/components/ExportModal.svelte';
 	import ReferenceSearch from '$lib/components/ReferenceSearch.svelte';
 	import TableToolbar from '$lib/components/TableToolbar.svelte';
@@ -89,7 +88,13 @@
 		}
 	});
 
-	async function loadOrders(page: number, size: number, sort?: SortConfig, search?: string, filters?: ColumnFilters) {
+	async function loadOrders(
+		page: number,
+		size: number,
+		sort?: SortConfig,
+		search?: string,
+		filters?: ColumnFilters
+	) {
 		if (!dataContext.db) return;
 
 		ordersLoading = true;
@@ -322,11 +327,7 @@
 				prefix="EUR/USD"
 				variant="rate"
 			/>
-			<StatCard
-				label="Currencies"
-				value={stats.activeCurrencies.toString()}
-				variant="default"
-			/>
+			<StatCard label="Currencies" value={stats.activeCurrencies.toString()} variant="default" />
 		</section>
 
 		<!-- Volume by Currency -->
@@ -348,10 +349,7 @@
 							</div>
 							<div class="currency-volume">{formatCompact(volume)}</div>
 							<div class="currency-bar">
-								<div
-									class="currency-bar-fill"
-									style="width: {(volume / maxVolume) * 100}%"
-								></div>
+								<div class="currency-bar-fill" style="width: {(volume / maxVolume) * 100}%"></div>
 							</div>
 						</div>
 					{/each}
@@ -364,18 +362,23 @@
 			<div class="section-header">
 				<div class="section-header-left">
 					<h2 class="section-title">Unified Orders</h2>
-					<ReferenceSearch
-						value={referenceSearch}
-						onChange={handleReferenceSearchChange}
-					/>
+					<ReferenceSearch value={referenceSearch} onChange={handleReferenceSearchChange} />
 				</div>
 				<div class="section-actions">
-					<RefreshButton
-						onclick={handleRefresh}
-						loading={dataContext.state.loading}
-					/>
-					<button class="btn-filter" class:active={showFilters || activeFilterCount > 0} onclick={toggleFilters}>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<RefreshButton onclick={handleRefresh} loading={dataContext.state.loading} />
+					<button
+						class="btn-filter"
+						class:active={showFilters || activeFilterCount > 0}
+						onclick={toggleFilters}
+					>
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+						>
 							<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
 						</svg>
 						Filter
@@ -383,15 +386,11 @@
 							<span class="filter-badge">{activeFilterCount}</span>
 						{/if}
 					</button>
-					<button class="btn-export" onclick={() => showExportModal = true}>Export</button>
+					<button class="btn-export" onclick={() => (showExportModal = true)}>Export</button>
 				</div>
 			</div>
 			{#if showFilters}
-				<TableToolbar
-					{filterOptions}
-					{columnFilters}
-					onFilterChange={handleColumnFiltersChange}
-				/>
+				<TableToolbar {filterOptions} {columnFilters} onFilterChange={handleColumnFiltersChange} />
 			{/if}
 			{#if dataContext.state.loading && !dataContext.state.initialized}
 				<div class="orders-loading">
@@ -403,15 +402,15 @@
 				</div>
 			{:else}
 				<OrdersTable
-					orders={orders}
+					{orders}
 					loading={ordersLoading}
 					totalCount={totalOrders}
-					pageSize={pageSize}
-					currentPage={currentPage}
+					{pageSize}
+					{currentPage}
 					onPageChange={handlePageChange}
 					onPageSizeChange={handlePageSizeChange}
 					onSortChange={handleSortChange}
-					currentSort={currentSort}
+					{currentSort}
 					searchTerm={referenceSearch}
 					hasFilters={hasActiveFilters}
 				/>
@@ -423,12 +422,12 @@
 <!-- Export Modal -->
 <ExportModal
 	open={showExportModal}
-	onclose={() => showExportModal = false}
+	onclose={() => (showExportModal = false)}
 	onexport={handleExport}
 	ongetcount={handleGetExportCount}
 	totalOrders={hasActiveFilters ? stats.totalTrades : totalOrders}
 	filteredCount={totalOrders}
-	hasActiveFilters={hasActiveFilters}
+	{hasActiveFilters}
 	{referenceSearch}
 	{columnFilters}
 	sortConfig={currentSort}
@@ -454,7 +453,9 @@
 		position: sticky;
 		top: 0;
 		z-index: 100;
-		transition: background 0.3s ease, border-color 0.3s ease;
+		transition:
+			background 0.3s ease,
+			border-color 0.3s ease;
 	}
 
 	.header-left {
@@ -558,7 +559,9 @@
 		background: var(--bg-secondary);
 		border: 1px solid var(--border-primary);
 		padding: 20px;
-		transition: background 0.3s ease, border-color 0.3s ease;
+		transition:
+			background 0.3s ease,
+			border-color 0.3s ease;
 	}
 
 	.section-title {
@@ -657,7 +660,9 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		transition: background 0.3s ease, border-color 0.3s ease;
+		transition:
+			background 0.3s ease,
+			border-color 0.3s ease;
 	}
 
 	.section-header {

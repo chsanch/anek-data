@@ -48,9 +48,7 @@
 		return 'idle';
 	});
 
-	let isLoading = $derived(
-		status.state === 'checking' || status.state === 'loading' || refreshing
-	);
+	let isLoading = $derived(status.state === 'checking' || status.state === 'loading' || refreshing);
 </script>
 
 <div class="cache-indicator" data-variant={statusVariant}>
@@ -63,8 +61,17 @@
 	</div>
 	{#if status.isStale}
 		<span class="stale-warning" title="Data may be outdated. Refresh to get latest.">
-			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+			<svg
+				width="14"
+				height="14"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+			>
+				<path
+					d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+				/>
 				<line x1="12" y1="9" x2="12" y2="13" />
 				<line x1="12" y1="17" x2="12.01" y2="17" />
 			</svg>
@@ -128,28 +135,33 @@
 	}
 
 	@keyframes pulse {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.4; }
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.4;
+		}
 	}
 
 	/* Variant-based status dot colors */
-	[data-variant="cache"] .status-dot {
+	[data-variant='cache'] .status-dot {
 		background: var(--accent-primary);
 	}
 
-	[data-variant="network"] .status-dot {
+	[data-variant='network'] .status-dot {
 		background: #22c55e;
 	}
 
-	[data-variant="loading"] .status-dot {
+	[data-variant='loading'] .status-dot {
 		background: #f59e0b;
 	}
 
-	[data-variant="error"] .status-dot {
+	[data-variant='error'] .status-dot {
 		background: #ef4444;
 	}
 
-	[data-variant="stale"] .status-dot {
+	[data-variant='stale'] .status-dot {
 		background: #f59e0b;
 	}
 
@@ -201,21 +213,25 @@
 	}
 
 	@keyframes spin {
-		from { transform: rotate(0deg); }
-		to { transform: rotate(360deg); }
+		from {
+			transform: rotate(0deg);
+		}
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	/* Stale variant border */
-	[data-variant="stale"] {
+	[data-variant='stale'] {
 		border-color: #f59e0b;
 	}
 
 	/* Error variant */
-	[data-variant="error"] {
+	[data-variant='error'] {
 		border-color: #ef4444;
 	}
 
-	[data-variant="error"] .status-label {
+	[data-variant='error'] .status-label {
 		color: #ef4444;
 	}
 </style>

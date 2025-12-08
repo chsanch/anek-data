@@ -26,56 +26,56 @@ unified-orders (summary view)
 
 #### 1. unified-orders (main list/summary)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` / `reference` | string | K-xxx (order), KCH-xxx (chain) |
-| `fx-order-type` | string | "forward", "chain", "spot" |
-| `market-direction` | string | "buy" or "sell" |
-| `buy-amount` / `sell-amount` | integer | Amounts in **cents** |
-| `buy-currency` / `sell-currency` | string | EUR, USD, CHF, DKK |
-| `rate` | decimal | Exchange rate |
-| `value-date` | date | Settlement date |
-| `creation-date` | date | Order creation |
-| `execution-date` | date | When executed (nullable) |
-| `status` | string | "open", "closed_to_trading", "completed" |
-| `liquidity-provider` | string | LP code (e.g., "SIVB") |
+| Field                            | Type    | Description                              |
+| -------------------------------- | ------- | ---------------------------------------- |
+| `id` / `reference`               | string  | K-xxx (order), KCH-xxx (chain)           |
+| `fx-order-type`                  | string  | "forward", "chain", "spot"               |
+| `market-direction`               | string  | "buy" or "sell"                          |
+| `buy-amount` / `sell-amount`     | integer | Amounts in **cents**                     |
+| `buy-currency` / `sell-currency` | string  | EUR, USD, CHF, DKK                       |
+| `rate`                           | decimal | Exchange rate                            |
+| `value-date`                     | date    | Settlement date                          |
+| `creation-date`                  | date    | Order creation                           |
+| `execution-date`                 | date    | When executed (nullable)                 |
+| `status`                         | string  | "open", "closed_to_trading", "completed" |
+| `liquidity-provider`             | string  | LP code (e.g., "SIVB")                   |
 
 #### 2. orders (detailed forward order)
 
 Additional fields beyond unified-orders:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `commission-amount-cents` | integer | Commission in cents |
-| `commission-rate` | decimal | Commission rate (e.g., 0.0034) |
-| `currency-pair` | string | e.g., "EURUSD" |
-| `normalized-currency-pair` | string | Standardized pair format |
-| `order-type` | string | "forward" |
-| `selected-lp` | string | Selected liquidity provider |
-| `inverse-rate` | decimal | Inverse of the rate |
+| Field                      | Type    | Description                    |
+| -------------------------- | ------- | ------------------------------ |
+| `commission-amount-cents`  | integer | Commission in cents            |
+| `commission-rate`          | decimal | Commission rate (e.g., 0.0034) |
+| `currency-pair`            | string  | e.g., "EURUSD"                 |
+| `normalized-currency-pair` | string  | Standardized pair format       |
+| `order-type`               | string  | "forward"                      |
+| `selected-lp`              | string  | Selected liquidity provider    |
+| `inverse-rate`             | decimal | Inverse of the rate            |
 
 #### 3. kaas-swaps (rolls and draws within chains)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `swap-type` | string | "roll" or "early-draw" |
-| `near-value-date` / `far-value-date` | date | Swap dates |
-| `near-direction` / `far-direction` | string | "buy" or "sell" |
-| `swap-points` | string | Points difference (e.g., "-3395.1 CHF") |
-| `spot-rate`, `rate` | decimal | Rates |
-| `chain-rate`, `parent-order-rate` | decimal | Reference rates |
-| `near-leg-delta-cents` / `far-leg-delta-cents` | integer | Delta amounts |
-| `parent-reference` | string | Reference to parent chain |
+| Field                                          | Type    | Description                             |
+| ---------------------------------------------- | ------- | --------------------------------------- |
+| `swap-type`                                    | string  | "roll" or "early-draw"                  |
+| `near-value-date` / `far-value-date`           | date    | Swap dates                              |
+| `near-direction` / `far-direction`             | string  | "buy" or "sell"                         |
+| `swap-points`                                  | string  | Points difference (e.g., "-3395.1 CHF") |
+| `spot-rate`, `rate`                            | decimal | Rates                                   |
+| `chain-rate`, `parent-order-rate`              | decimal | Reference rates                         |
+| `near-leg-delta-cents` / `far-leg-delta-cents` | integer | Delta amounts                           |
+| `parent-reference`                             | string  | Reference to parent chain               |
 
 #### 4. legs (swap legs)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `leg-type` | string | "near" or "far" |
-| `sell-amount-cents`, `buy-amount-cents` | integer | Leg amounts |
-| `sell-currency`, `buy-currency` | string | Currencies |
-| `rate` | decimal | Leg rate |
-| `value-date` | date | Leg settlement |
+| Field                                   | Type    | Description     |
+| --------------------------------------- | ------- | --------------- |
+| `leg-type`                              | string  | "near" or "far" |
+| `sell-amount-cents`, `buy-amount-cents` | integer | Leg amounts     |
+| `sell-currency`, `buy-currency`         | string  | Currencies      |
+| `rate`                                  | decimal | Leg rate        |
+| `value-date`                            | date    | Leg settlement  |
 
 ---
 
@@ -308,15 +308,15 @@ ORDER BY value_date;
 
 ## Chart Recommendations for Svelte App
 
-| Chart Type | Aggregation | Use Case |
-|------------|-------------|----------|
-| **Bar Chart** | Volume by currency pair | See which pairs are most traded |
-| **Line Chart** | Daily volume trend | Spot patterns over time |
-| **Pie Chart** | Volume by status | Open vs completed breakdown |
-| **Stacked Bar** | Buy vs sell by date | Direction analysis |
-| **Table** | Top N largest orders | Quick overview |
-| **Calendar Heatmap** | Settlement dates | Cash flow planning |
-| **Donut Chart** | Order type distribution | Forward vs chain vs spot |
+| Chart Type           | Aggregation             | Use Case                        |
+| -------------------- | ----------------------- | ------------------------------- |
+| **Bar Chart**        | Volume by currency pair | See which pairs are most traded |
+| **Line Chart**       | Daily volume trend      | Spot patterns over time         |
+| **Pie Chart**        | Volume by status        | Open vs completed breakdown     |
+| **Stacked Bar**      | Buy vs sell by date     | Direction analysis              |
+| **Table**            | Top N largest orders    | Quick overview                  |
+| **Calendar Heatmap** | Settlement dates        | Cash flow planning              |
+| **Donut Chart**      | Order type distribution | Forward vs chain vs spot        |
 
 ---
 
@@ -324,13 +324,13 @@ ORDER BY value_date;
 
 ### Libraries Under Consideration
 
-| Library | Bundle Size | Focus | Svelte Support |
-|---------|-------------|-------|----------------|
-| **Lightweight Charts** | ~40KB | Financial/Time-series | Direct |
-| **Chart.js** | ~60KB | General purpose | svelte-chartjs |
-| **Apache ECharts** | ~300KB* | Full-featured | svelte-echarts |
+| Library                | Bundle Size | Focus                 | Svelte Support |
+| ---------------------- | ----------- | --------------------- | -------------- |
+| **Lightweight Charts** | ~40KB       | Financial/Time-series | Direct         |
+| **Chart.js**           | ~60KB       | General purpose       | svelte-chartjs |
+| **Apache ECharts**     | ~300KB\*    | Full-featured         | svelte-echarts |
 
-*ECharts is tree-shakeable, can be reduced significantly
+\*ECharts is tree-shakeable, can be reduced significantly
 
 ### Lightweight Charts (TradingView)
 
@@ -338,25 +338,26 @@ ORDER BY value_date;
 
 **What it does well:**
 
-| Chart Type | Support | Quality |
-|------------|---------|---------|
-| Line Chart | Excellent | Smooth, performant |
-| Area Chart | Excellent | Great for cumulative data |
+| Chart Type  | Support   | Quality                       |
+| ----------- | --------- | ----------------------------- |
+| Line Chart  | Excellent | Smooth, performant            |
+| Area Chart  | Excellent | Great for cumulative data     |
 | Candlestick | Excellent | Professional TradingView look |
-| Histogram | Good | Time-based bars |
-| Baseline | Good | Above/below threshold |
+| Histogram   | Good      | Time-based bars               |
+| Baseline    | Good      | Above/below threshold         |
 
 **What it doesn't support:**
 
-| Chart Type | Support | Impact on Our Needs |
-|------------|---------|---------------------|
-| Pie/Donut | No | Can't show status/type distribution |
-| Stacked Bar | No | Can't show buy vs sell breakdown |
-| Grouped Bar | No | Can't compare currency pairs side-by-side |
-| Heatmap | No | Can't show settlement calendar |
-| Radar | No | N/A for our use case |
+| Chart Type  | Support | Impact on Our Needs                       |
+| ----------- | ------- | ----------------------------------------- |
+| Pie/Donut   | No      | Can't show status/type distribution       |
+| Stacked Bar | No      | Can't show buy vs sell breakdown          |
+| Grouped Bar | No      | Can't compare currency pairs side-by-side |
+| Heatmap     | No      | Can't show settlement calendar            |
+| Radar       | No      | N/A for our use case                      |
 
 **Pros:**
+
 - TradingView professional look (fits FX domain)
 - Very fast (handles 100K+ data points)
 - Small bundle size (~40KB)
@@ -364,6 +365,7 @@ ORDER BY value_date;
 - Active maintenance
 
 **Cons:**
+
 - Limited to time-series visualizations
 - No categorical comparisons
 - Would need to redesign some visualizations
@@ -372,21 +374,23 @@ ORDER BY value_date;
 
 **What it does well:**
 
-| Chart Type | Support | Quality |
-|------------|---------|---------|
-| Line/Area | Good | Standard quality |
+| Chart Type      | Support   | Quality                      |
+| --------------- | --------- | ---------------------------- |
+| Line/Area       | Good      | Standard quality             |
 | Bar (all types) | Excellent | Stacked, grouped, horizontal |
-| Pie/Donut | Excellent | With labels and legends |
-| Radar | Good | N/A for us |
-| Scatter | Good | N/A for us |
+| Pie/Donut       | Excellent | With labels and legends      |
+| Radar           | Good      | N/A for us                   |
+| Scatter         | Good      | N/A for us                   |
 
 **Pros:**
+
 - All chart types we need
 - Well-documented
 - Large ecosystem
 - Easy to learn
 
 **Cons:**
+
 - Generic look (not financial-focused)
 - Performance degrades with large datasets (>10K points)
 - Canvas-based (less crisp on retina)
@@ -395,16 +399,17 @@ ORDER BY value_date;
 
 **What it does well:**
 
-| Chart Type | Support | Quality |
-|------------|---------|---------|
-| Line/Area | Excellent | Highly customizable |
-| Bar (all types) | Excellent | All variations |
-| Pie/Donut | Excellent | Rich interactions |
-| Candlestick | Excellent | Professional quality |
-| Heatmap | Excellent | Calendar heatmaps supported |
-| TreeMap | Excellent | For hierarchical data |
+| Chart Type      | Support   | Quality                     |
+| --------------- | --------- | --------------------------- |
+| Line/Area       | Excellent | Highly customizable         |
+| Bar (all types) | Excellent | All variations              |
+| Pie/Donut       | Excellent | Rich interactions           |
+| Candlestick     | Excellent | Professional quality        |
+| Heatmap         | Excellent | Calendar heatmaps supported |
+| TreeMap         | Excellent | For hierarchical data       |
 
 **Pros:**
+
 - Every chart type imaginable
 - Handles large datasets well
 - Can look professional/financial with theming
@@ -412,47 +417,50 @@ ORDER BY value_date;
 - Good for dashboards
 
 **Cons:**
+
 - Larger bundle (but tree-shakeable)
 - Steeper learning curve
 - Configuration can be verbose
 
 ### Comparison Matrix for Our Needs
 
-| Our Requirement | Lightweight Charts | Chart.js | ECharts |
-|-----------------|-------------------|----------|---------|
-| Daily volume trend (line) | Excellent | Good | Excellent |
-| Volume by currency pair (bar) | Limited* | Good | Excellent |
-| Status distribution (pie) | No | Excellent | Excellent |
-| Buy vs sell (stacked bar) | No | Excellent | Excellent |
-| Settlement calendar (heatmap) | No | No | Excellent |
-| Order type distribution (donut) | No | Excellent | Excellent |
-| Large dataset performance | Excellent | Poor | Good |
-| Financial/Trading look | Excellent | Poor | Good |
-| Bundle size | Excellent | Good | Fair |
+| Our Requirement                 | Lightweight Charts | Chart.js  | ECharts   |
+| ------------------------------- | ------------------ | --------- | --------- |
+| Daily volume trend (line)       | Excellent          | Good      | Excellent |
+| Volume by currency pair (bar)   | Limited\*          | Good      | Excellent |
+| Status distribution (pie)       | No                 | Excellent | Excellent |
+| Buy vs sell (stacked bar)       | No                 | Excellent | Excellent |
+| Settlement calendar (heatmap)   | No                 | No        | Excellent |
+| Order type distribution (donut) | No                 | Excellent | Excellent |
+| Large dataset performance       | Excellent          | Poor      | Good      |
+| Financial/Trading look          | Excellent          | Poor      | Good      |
+| Bundle size                     | Excellent          | Good      | Fair      |
 
-*Lightweight Charts can do time-based histograms but not categorical bars
+\*Lightweight Charts can do time-based histograms but not categorical bars
 
 ### Recommendation
 
 #### Option A: Lightweight Charts Only (Trading-Focused Dashboard)
 
 Choose this if:
+
 - Time-series charts are 80%+ of the dashboard
 - Team prefers TradingView aesthetic
 - Willing to adapt visualizations
 
 **Adaptations needed:**
 
-| Original Chart | Lightweight Alternative |
-|----------------|------------------------|
-| Pie (status) | Stacked area over time showing status changes |
-| Donut (order types) | Multiple line series (one per type) |
-| Stacked bar (buy/sell) | Histogram with two series or baseline chart |
-| Heatmap (settlements) | Display as data table instead |
+| Original Chart         | Lightweight Alternative                       |
+| ---------------------- | --------------------------------------------- |
+| Pie (status)           | Stacked area over time showing status changes |
+| Donut (order types)    | Multiple line series (one per type)           |
+| Stacked bar (buy/sell) | Histogram with two series or baseline chart   |
+| Heatmap (settlements)  | Display as data table instead                 |
 
 #### Option B: ECharts (Full-Featured Dashboard)
 
 Choose this if:
+
 - Need all chart types from the proposal
 - Want flexibility for future requirements
 - Can accept larger bundle size
@@ -462,6 +470,7 @@ Choose this if:
 #### Option C: Lightweight Charts + Tables (Hybrid)
 
 Choose this if:
+
 - Want TradingView look for main charts
 - Okay with showing categorical data in tables instead of charts
 
@@ -538,26 +547,29 @@ This gives the professional TradingView look while keeping the bundle small. If 
 ```
 
 **Parquet Format (Apache Parquet)**
+
 - Columnar storage format designed for efficient storage and retrieval
 - Highly compressed (5-10x smaller than JSON)
 - Ideal for transferring data over the network
 - Schema is embedded in the file
-- *Used in this proposal for:* Initial bulk data download
+- _Used in this proposal for:_ Initial bulk data download
 
 **Arrow Format (Apache Arrow)**
+
 - Columnar memory format designed for fast analytics
 - Zero-copy reads (no serialization overhead)
 - Standardized format that multiple tools can share
-- *Used in this proposal for:* In-memory processing within DuckDB WASM
+- _Used in this proposal for:_ In-memory processing within DuckDB WASM
 
 **Why both?**
 
-| Format | Optimized For | Size | Speed |
-|--------|---------------|------|-------|
-| Parquet | Storage & Transfer | Small | Fast to download |
-| Arrow | In-Memory Analytics | Larger | Instant queries |
+| Format  | Optimized For       | Size   | Speed            |
+| ------- | ------------------- | ------ | ---------------- |
+| Parquet | Storage & Transfer  | Small  | Fast to download |
+| Arrow   | In-Memory Analytics | Larger | Instant queries  |
 
 **How DuckDB uses them:**
+
 1. You download a Parquet file (small, compressed)
 2. DuckDB loads it into memory as Arrow format (fast to query)
 3. All queries run against Arrow data (instant results)
@@ -576,13 +588,14 @@ This gives the professional TradingView look while keeping the bundle small. If 
 
 **Target: ~20,000 orders** for initial load
 
-| Format | Estimated Size (20K orders) | Load Speed | Recommendation |
-|--------|----------------------------|------------|----------------|
-| JSON | ~10-15 MB | Slowest | Not recommended for bulk |
-| CSV | ~5-8 MB | Medium | Fallback option |
-| **Parquet** | **~1-3 MB** | **Fastest** | **Recommended** |
+| Format      | Estimated Size (20K orders) | Load Speed  | Recommendation           |
+| ----------- | --------------------------- | ----------- | ------------------------ |
+| JSON        | ~10-15 MB                   | Slowest     | Not recommended for bulk |
+| CSV         | ~5-8 MB                     | Medium      | Fallback option          |
+| **Parquet** | **~1-3 MB**                 | **Fastest** | **Recommended**          |
 
 **Why Parquet?**
+
 - Columnar format with excellent compression (5-10x smaller than JSON)
 - Native DuckDB support = very fast loading
 - Schema embedded in file (type-safe)
@@ -672,11 +685,11 @@ ON CONFLICT (id) DO UPDATE SET
 
 For near real-time sync, consider:
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| **Polling** (every 30s-60s) | Simple to implement | Not truly real-time |
-| **Server-Sent Events (SSE)** | Real-time, simple | One-way only |
-| **WebSocket** | Bi-directional, real-time | More complex |
+| Approach                     | Pros                      | Cons                |
+| ---------------------------- | ------------------------- | ------------------- |
+| **Polling** (every 30s-60s)  | Simple to implement       | Not truly real-time |
+| **Server-Sent Events (SSE)** | Real-time, simple         | One-way only        |
+| **WebSocket**                | Bi-directional, real-time | More complex        |
 
 **Recommended: Start with polling**, upgrade to SSE if needed.
 
@@ -689,9 +702,11 @@ For near real-time sync, consider:
    - Keep previous versions for rollback
 
 2. **Delta API Endpoint**
+
    ```
    GET /unified-orders?filter[updated_since]=2025-12-01T00:00:00Z
    ```
+
    - Returns orders created or modified since timestamp
    - Include `updated_at` field in response
    - Paginate if > 1000 results
@@ -699,10 +714,10 @@ For near real-time sync, consider:
 3. **Manifest File** (optional but recommended)
    ```json
    {
-     "latest_parquet": "orders-2025-12-08.parquet",
-     "generated_at": "2025-12-08T06:00:00Z",
-     "record_count": 20000,
-     "checksum": "sha256:abc123..."
+   	"latest_parquet": "orders-2025-12-08.parquet",
+   	"generated_at": "2025-12-08T06:00:00Z",
+   	"record_count": 20000,
+   	"checksum": "sha256:abc123..."
    }
    ```
 
@@ -713,20 +728,20 @@ For near real-time sync, consider:
 ```javascript
 // Persist DuckDB database to IndexedDB
 async function persistDatabase(db) {
-  const data = await db.export();
-  const idb = await openDB('fx-analytics', 1);
-  await idb.put('duckdb', data, 'database');
+	const data = await db.export();
+	const idb = await openDB('fx-analytics', 1);
+	await idb.put('duckdb', data, 'database');
 }
 
 // Load from IndexedDB on startup
 async function loadDatabase() {
-  const idb = await openDB('fx-analytics', 1);
-  const data = await idb.get('duckdb', 'database');
-  if (data) {
-    await db.import(data);
-    return true;
-  }
-  return false;
+	const idb = await openDB('fx-analytics', 1);
+	const data = await idb.get('duckdb', 'database');
+	if (data) {
+		await db.import(data);
+		return true;
+	}
+	return false;
 }
 ```
 
@@ -795,21 +810,21 @@ COPY (SELECT * FROM orders) TO 'orders.parquet' (FORMAT PARQUET);
 
 ### Expected Performance (20K orders)
 
-| Operation | Expected Time |
-|-----------|---------------|
-| Load Parquet (1-3 MB) | < 500ms |
-| Simple aggregation query | < 50ms |
-| Complex GROUP BY query | < 200ms |
-| Full table scan | < 100ms |
+| Operation                | Expected Time |
+| ------------------------ | ------------- |
+| Load Parquet (1-3 MB)    | < 500ms       |
+| Simple aggregation query | < 50ms        |
+| Complex GROUP BY query   | < 200ms       |
+| Full table scan          | < 100ms       |
 
 ### Scaling Guidelines
 
-| Order Count | Parquet Size | Recommended Approach |
-|-------------|--------------|---------------------|
-| < 50K | ~5 MB | Single Parquet file |
-| 50K - 200K | ~20 MB | Single file, consider lazy loading |
-| 200K - 1M | ~100 MB | Split by time period (monthly files) |
-| > 1M | > 500 MB | Server-side aggregation recommended |
+| Order Count | Parquet Size | Recommended Approach                 |
+| ----------- | ------------ | ------------------------------------ |
+| < 50K       | ~5 MB        | Single Parquet file                  |
+| 50K - 200K  | ~20 MB       | Single file, consider lazy loading   |
+| 200K - 1M   | ~100 MB      | Split by time period (monthly files) |
+| > 1M        | > 500 MB     | Server-side aggregation recommended  |
 
 ---
 

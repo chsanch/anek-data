@@ -11,7 +11,7 @@
 <button
 	class="refresh-button"
 	class:loading
-	onclick={onclick}
+	{onclick}
 	disabled={disabled || loading}
 	aria-label={loading ? 'Refreshing data...' : 'Refresh data'}
 >

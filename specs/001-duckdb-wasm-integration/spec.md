@@ -13,7 +13,7 @@
 - Q: How is the parquet file source URL configured? → A: Environment variable (set at build/deploy time)
 - Q: Which field represents "Total Volume" for aggregation? → A: Sum of sellAmountCents (notional traded)
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Load Order Data from Remote Parquet File (Priority: P1)
 
@@ -73,7 +73,7 @@ As a dashboard user, I want to see trading volume broken down by currency so tha
 - What happens if the browser runs out of memory while processing data?
 - How are network timeouts handled during file download?
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -97,7 +97,7 @@ As a dashboard user, I want to see trading volume broken down by currency so tha
 - **Dashboard Statistics**: Aggregated metrics derived from orders including total count, total volume, currency breakdowns, and filtered counts.
 - **Data Store**: Local query-capable storage that holds loaded order data and supports aggregation queries.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

@@ -16,29 +16,31 @@ Integrate DuckDB WASM to enable local-first FX analytics in the browser. The sys
 **Target Platform**: Browser (WASM)
 **Project Type**: Web application (SvelteKit)
 **Performance Goals**:
+
 - Parquet load: < 10s for files under 10MB (SC-001)
 - Simple aggregations: < 50ms (Constitution)
 - Pagination: < 100ms (SC-006)
 - Loading indicator: visible within 500ms (SC-004)
-**Constraints**:
+  **Constraints**:
 - Up to 100,000 orders (SC-003)
 - Offline-capable data processing (Constitution Principle I)
 - No SSR for analytics views (Constitution)
-**Scale/Scope**: Single dashboard page, 100K order records max
+  **Scale/Scope**: Single dashboard page, 100K order records max
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| I. Local-First Architecture | ✅ PASS | DuckDB WASM processes all analytics in browser; server only provides Parquet file |
-| II. Data Integrity & Sync | ✅ PASS | Parquet as source of truth; amounts in cents (integer); no IndexedDB for MVP |
-| III. Performance-First Design | ✅ PASS | Performance targets defined and achievable per research |
-| IV. Component Independence | ✅ PASS | Using Svelte 5 runes; components manage own loading/error states |
-| V. Simplicity Over Flexibility | ✅ PASS | Direct SQL queries; no abstraction layers; existing UI reused |
+| Principle                      | Status  | Notes                                                                             |
+| ------------------------------ | ------- | --------------------------------------------------------------------------------- |
+| I. Local-First Architecture    | ✅ PASS | DuckDB WASM processes all analytics in browser; server only provides Parquet file |
+| II. Data Integrity & Sync      | ✅ PASS | Parquet as source of truth; amounts in cents (integer); no IndexedDB for MVP      |
+| III. Performance-First Design  | ✅ PASS | Performance targets defined and achievable per research                           |
+| IV. Component Independence     | ✅ PASS | Using Svelte 5 runes; components manage own loading/error states                  |
+| V. Simplicity Over Flexibility | ✅ PASS | Direct SQL queries; no abstraction layers; existing UI reused                     |
 
 **Technology Stack Alignment**:
+
 - ✅ SvelteKit with Svelte 5
 - ✅ TypeScript (strict mode)
 - ✅ Tailwind CSS 4 (existing)
@@ -47,6 +49,7 @@ Integrate DuckDB WASM to enable local-first FX analytics in the browser. The sys
 - ✅ Apache Parquet format
 
 **NOT in scope verification**:
+
 - ✅ No additional charting libraries added
 - ✅ No state management libraries (using runes)
 - ✅ No ORM or query builders (raw SQL)
@@ -116,8 +119,8 @@ tests/
 > No violations - design aligns with Constitution principles.
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| N/A | N/A | N/A |
+| --------- | ---------- | ------------------------------------ |
+| N/A       | N/A        | N/A                                  |
 
 ## Implementation Phases
 
@@ -126,6 +129,7 @@ tests/
 **Goal**: Initialize DuckDB WASM and load Parquet file on app start
 
 **Files to create**:
+
 1. `src/lib/db/duckdb.ts` - Singleton initialization
 2. `src/lib/db/loader.ts` - Parquet fetch and load
 3. `src/lib/db/queries.ts` - SQL query definitions
@@ -134,11 +138,13 @@ tests/
 6. `src/lib/components/ErrorMessage.svelte` - Error UI
 
 **Files to modify**:
+
 1. `src/routes/+layout.svelte` - Wrap with DataProvider
 2. `src/app.d.ts` - Add PUBLIC_PARQUET_URL type
 3. `.env` - Add PUBLIC_PARQUET_URL variable
 
 **Dependencies to add**:
+
 - `@duckdb/duckdb-wasm`
 
 ### Phase 2: Dashboard Statistics (P2 - Aggregations)
@@ -146,9 +152,11 @@ tests/
 **Goal**: Calculate and display real statistics from loaded data
 
 **Files to create**:
+
 1. `src/lib/db/stats.svelte.ts` - Reactive stats service
 
 **Files to modify**:
+
 1. `src/routes/+page.svelte` - Replace mock stats with DB queries
 2. `src/lib/components/StatCard.svelte` - Handle loading/error states
 
@@ -157,6 +165,7 @@ tests/
 **Goal**: Populate orders table with real data, preserve pagination
 
 **Files to modify**:
+
 1. `src/routes/+page.svelte` - Query orders from DB
 2. `src/lib/components/OrdersTable.svelte` - Minor adjustments for data source
 
@@ -165,9 +174,11 @@ tests/
 **Goal**: Add manual refresh button
 
 **Files to create**:
+
 1. `src/lib/components/RefreshButton.svelte` - Refresh button component
 
 **Files to modify**:
+
 1. `src/routes/+page.svelte` - Add refresh button to header
 
 ### Phase 5: Testing & Polish
@@ -175,6 +186,7 @@ tests/
 **Goal**: Comprehensive testing and error handling
 
 **Files to create**:
+
 1. `tests/unit/db/duckdb.test.ts`
 2. `tests/unit/db/queries.test.ts`
 3. `tests/unit/db/loader.test.ts`
@@ -208,23 +220,23 @@ LIMIT ? OFFSET ?;
 
 ## Success Criteria Mapping
 
-| Criteria | Implementation | Verification |
-|----------|----------------|--------------|
-| SC-001: < 10s load | Async fetch + DuckDB COPY | Performance test |
-| SC-002: 100% accuracy | SQL aggregations | Unit tests |
-| SC-003: 100K records | DuckDB handles natively | Load test |
-| SC-004: 500ms loading indicator | Immediate state update | Manual + e2e |
-| SC-005: 2s error display | Try/catch with state update | Unit test |
-| SC-006: < 100ms pagination | SQL LIMIT/OFFSET | Performance test |
+| Criteria                        | Implementation              | Verification     |
+| ------------------------------- | --------------------------- | ---------------- |
+| SC-001: < 10s load              | Async fetch + DuckDB COPY   | Performance test |
+| SC-002: 100% accuracy           | SQL aggregations            | Unit tests       |
+| SC-003: 100K records            | DuckDB handles natively     | Load test        |
+| SC-004: 500ms loading indicator | Immediate state update      | Manual + e2e     |
+| SC-005: 2s error display        | Try/catch with state update | Unit test        |
+| SC-006: < 100ms pagination      | SQL LIMIT/OFFSET            | Performance test |
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|------------|
-| Large Parquet file (> 100MB) | Show warning, implement chunking in future |
-| CORS issues | Document server configuration requirements |
-| Browser memory limits | Track memory usage, warn if approaching limit |
-| DuckDB WASM bundle size | Lazy load, show loading state |
+| Risk                         | Mitigation                                    |
+| ---------------------------- | --------------------------------------------- |
+| Large Parquet file (> 100MB) | Show warning, implement chunking in future    |
+| CORS issues                  | Document server configuration requirements    |
+| Browser memory limits        | Track memory usage, warn if approaching limit |
+| DuckDB WASM bundle size      | Lazy load, show loading state                 |
 
 ## Next Steps
 

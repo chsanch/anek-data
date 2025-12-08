@@ -14,22 +14,22 @@ The Order entity represents a unified FX transaction record. This entity is load
 
 #### Attributes
 
-| Field | Type | Nullable | Description | Validation |
-|-------|------|----------|-------------|------------|
-| id | VARCHAR | No | Unique identifier (K-xxxxxx format) | Primary key |
-| reference | VARCHAR | No | Reference number | Non-empty string |
-| fx_order_type | VARCHAR | No | Order type | 'forward', 'chain', 'spot' |
-| market_direction | VARCHAR | No | Trade direction | 'buy', 'sell' |
-| buy_amount_cents | BIGINT | No | Buy amount in cents | >= 0 |
-| sell_amount_cents | BIGINT | No | Sell amount in cents | >= 0 |
-| buy_currency | VARCHAR | No | Buy currency code | 3-letter ISO code |
-| sell_currency | VARCHAR | No | Sell currency code | 3-letter ISO code |
-| rate | DECIMAL(18,8) | No | Exchange rate | > 0 |
-| value_date | DATE | No | Settlement date | Valid date |
-| creation_date | DATE | No | Order creation date | Valid date |
-| execution_date | DATE | Yes | Execution date | Valid date or NULL |
-| status | VARCHAR | No | Order status | 'open', 'closed_to_trading', 'completed' |
-| liquidity_provider | VARCHAR | No | LP code | Non-empty string |
+| Field              | Type          | Nullable | Description                         | Validation                               |
+| ------------------ | ------------- | -------- | ----------------------------------- | ---------------------------------------- |
+| id                 | VARCHAR       | No       | Unique identifier (K-xxxxxx format) | Primary key                              |
+| reference          | VARCHAR       | No       | Reference number                    | Non-empty string                         |
+| fx_order_type      | VARCHAR       | No       | Order type                          | 'forward', 'chain', 'spot'               |
+| market_direction   | VARCHAR       | No       | Trade direction                     | 'buy', 'sell'                            |
+| buy_amount_cents   | BIGINT        | No       | Buy amount in cents                 | >= 0                                     |
+| sell_amount_cents  | BIGINT        | No       | Sell amount in cents                | >= 0                                     |
+| buy_currency       | VARCHAR       | No       | Buy currency code                   | 3-letter ISO code                        |
+| sell_currency      | VARCHAR       | No       | Sell currency code                  | 3-letter ISO code                        |
+| rate               | DECIMAL(18,8) | No       | Exchange rate                       | > 0                                      |
+| value_date         | DATE          | No       | Settlement date                     | Valid date                               |
+| creation_date      | DATE          | No       | Order creation date                 | Valid date                               |
+| execution_date     | DATE          | Yes      | Execution date                      | Valid date or NULL                       |
+| status             | VARCHAR       | No       | Order status                        | 'open', 'closed_to_trading', 'completed' |
+| liquidity_provider | VARCHAR       | No       | LP code                             | Non-empty string                         |
 
 #### DuckDB Schema
 
@@ -65,20 +65,20 @@ CREATE TABLE orders (
 ```typescript
 // src/lib/types/orders.ts (existing)
 export interface UnifiedOrder {
-  id: string;
-  reference: string;
-  fxOrderType: 'forward' | 'chain' | 'spot';
-  marketDirection: 'buy' | 'sell';
-  buyAmountCents: number;
-  sellAmountCents: number;
-  buyCurrency: string;
-  sellCurrency: string;
-  rate: number;
-  valueDate: string;
-  creationDate: string;
-  executionDate: string | null;
-  status: 'open' | 'closed_to_trading' | 'completed';
-  liquidityProvider: string;
+	id: string;
+	reference: string;
+	fxOrderType: 'forward' | 'chain' | 'spot';
+	marketDirection: 'buy' | 'sell';
+	buyAmountCents: number;
+	sellAmountCents: number;
+	buyCurrency: string;
+	sellCurrency: string;
+	rate: number;
+	valueDate: string;
+	creationDate: string;
+	executionDate: string | null;
+	status: 'open' | 'closed_to_trading' | 'completed';
+	liquidityProvider: string;
 }
 ```
 
@@ -91,28 +91,28 @@ Aggregated statistics derived from Order data via SQL queries.
 
 #### Attributes
 
-| Field | Type | Description | Calculation |
-|-------|------|-------------|-------------|
-| totalTrades | number | Total order count | `COUNT(*)` |
-| totalVolume | number | Total trading volume in cents | `SUM(sell_amount_cents)` |
-| openOrders | number | Count of open orders | `COUNT(*) WHERE status = 'open'` |
-| volumeByCurrency | CurrencyVolume[] | Volume breakdown by sell currency | `GROUP BY sell_currency` |
+| Field            | Type             | Description                       | Calculation                      |
+| ---------------- | ---------------- | --------------------------------- | -------------------------------- |
+| totalTrades      | number           | Total order count                 | `COUNT(*)`                       |
+| totalVolume      | number           | Total trading volume in cents     | `SUM(sell_amount_cents)`         |
+| openOrders       | number           | Count of open orders              | `COUNT(*) WHERE status = 'open'` |
+| volumeByCurrency | CurrencyVolume[] | Volume breakdown by sell currency | `GROUP BY sell_currency`         |
 
 #### TypeScript Interface
 
 ```typescript
 // src/lib/db/stats.svelte.ts (new)
 export interface CurrencyVolume {
-  currency: string;
-  volume: number;
-  change?: number; // Optional: percentage change (future feature)
+	currency: string;
+	volume: number;
+	change?: number; // Optional: percentage change (future feature)
 }
 
 export interface DashboardStats {
-  totalTrades: number;
-  totalVolume: number;
-  openOrders: number;
-  volumeByCurrency: CurrencyVolume[];
+	totalTrades: number;
+	totalVolume: number;
+	openOrders: number;
+	volumeByCurrency: CurrencyVolume[];
 }
 ```
 
@@ -124,28 +124,28 @@ Tracks the loading and error state of the data layer.
 
 #### Attributes
 
-| Field | Type | Description |
-|-------|------|-------------|
-| loading | boolean | Data operation in progress |
-| error | DataError \| null | Current error state |
-| initialized | boolean | DuckDB initialized successfully |
-| lastRefresh | Date \| null | Last successful data refresh |
+| Field       | Type              | Description                     |
+| ----------- | ----------------- | ------------------------------- |
+| loading     | boolean           | Data operation in progress      |
+| error       | DataError \| null | Current error state             |
+| initialized | boolean           | DuckDB initialized successfully |
+| lastRefresh | Date \| null      | Last successful data refresh    |
 
 #### TypeScript Interface
 
 ```typescript
 // src/lib/db/types.ts (new)
 export type DataError =
-  | { type: 'network'; message: string; details?: string }
-  | { type: 'parse'; message: string; details?: string }
-  | { type: 'memory'; message: string; details?: string }
-  | { type: 'query'; message: string; details?: string };
+	| { type: 'network'; message: string; details?: string }
+	| { type: 'parse'; message: string; details?: string }
+	| { type: 'memory'; message: string; details?: string }
+	| { type: 'query'; message: string; details?: string };
 
 export interface DataState {
-  loading: boolean;
-  error: DataError | null;
-  initialized: boolean;
-  lastRefresh: Date | null;
+	loading: boolean;
+	error: DataError | null;
+	initialized: boolean;
+	lastRefresh: Date | null;
 }
 ```
 
@@ -217,42 +217,42 @@ export interface DataState {
 
 ### Order Status Values
 
-| Status | Description | Transitions From |
-|--------|-------------|------------------|
-| open | Active order | (initial state) |
-| closed_to_trading | No further trading | open |
-| completed | Fully settled | open, closed_to_trading |
+| Status            | Description        | Transitions From        |
+| ----------------- | ------------------ | ----------------------- |
+| open              | Active order       | (initial state)         |
+| closed_to_trading | No further trading | open                    |
+| completed         | Fully settled      | open, closed_to_trading |
 
 ## Column Name Mapping
 
 Parquet files use snake_case column names. TypeScript uses camelCase. The mapping is handled during query result processing.
 
 | Parquet (snake_case) | TypeScript (camelCase) |
-|---------------------|------------------------|
-| id | id |
-| reference | reference |
-| fx_order_type | fxOrderType |
-| market_direction | marketDirection |
-| buy_amount_cents | buyAmountCents |
-| sell_amount_cents | sellAmountCents |
-| buy_currency | buyCurrency |
-| sell_currency | sellCurrency |
-| rate | rate |
-| value_date | valueDate |
-| creation_date | creationDate |
-| execution_date | executionDate |
-| status | status |
-| liquidity_provider | liquidityProvider |
+| -------------------- | ---------------------- |
+| id                   | id                     |
+| reference            | reference              |
+| fx_order_type        | fxOrderType            |
+| market_direction     | marketDirection        |
+| buy_amount_cents     | buyAmountCents         |
+| sell_amount_cents    | sellAmountCents        |
+| buy_currency         | buyCurrency            |
+| sell_currency        | sellCurrency           |
+| rate                 | rate                   |
+| value_date           | valueDate              |
+| creation_date        | creationDate           |
+| execution_date       | executionDate          |
+| status               | status                 |
+| liquidity_provider   | liquidityProvider      |
 
 ## Data Volumes
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| Max orders | 100,000 | SC-003 requirement |
-| Typical orders | 20,000 | Per data-structure-proposal.md |
-| Parquet size (20K) | ~1-3 MB | Compressed |
-| Memory (20K) | ~10 MB | Arrow format in memory |
-| Memory (100K) | ~50 MB | Estimate |
+| Metric             | Target  | Notes                          |
+| ------------------ | ------- | ------------------------------ |
+| Max orders         | 100,000 | SC-003 requirement             |
+| Typical orders     | 20,000  | Per data-structure-proposal.md |
+| Parquet size (20K) | ~1-3 MB | Compressed                     |
+| Memory (20K)       | ~10 MB  | Arrow format in memory         |
+| Memory (100K)      | ~50 MB  | Estimate                       |
 
 ## Validation Rules
 
@@ -270,6 +270,7 @@ Parquet files use snake_case column names. TypeScript uses camelCase. The mappin
 ### Schema Validation (on load)
 
 If Parquet schema doesn't match expected structure:
+
 1. Log detailed error with missing/extra columns
 2. Set error state with user-friendly message
 3. Prevent data loading to avoid inconsistent state

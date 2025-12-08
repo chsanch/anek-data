@@ -10,6 +10,7 @@
 **Decision**: Use `idb` library (v8.x)
 
 **Rationale**:
+
 - Tiny footprint (~1.19KB brotli'd) - aligns with constitution's simplicity principle
 - Promise-based API - modern async/await patterns
 - Built-in TypeScript definitions - type safety for schema and operations
@@ -25,6 +26,7 @@
 | Native IndexedDB | Event-based API creates callback hell; idb is minimal wrapper |
 
 **References**:
+
 - [idb GitHub](https://github.com/jakearchibald/idb)
 - [idb npm](https://www.npmjs.com/package/idb)
 
@@ -35,24 +37,26 @@
 **Decision**: Single object store with composite key structure
 
 **Rationale**:
+
 - IndexedDB natively supports `ArrayBuffer` and `Blob` storage
 - Single store simplifies transaction management
 - URL-based key enables future multi-source caching
 
 **Schema Design**:
+
 ```typescript
 interface ParquetCacheDB {
-  'parquet-cache': {
-    key: string;  // URL of the parquet source
-    value: {
-      url: string;
-      data: ArrayBuffer;
-      timestamp: number;
-      expiresAt: number;
-      fileSize: number;
-      etag: string | null;
-    };
-  };
+	'parquet-cache': {
+		key: string; // URL of the parquet source
+		value: {
+			url: string;
+			data: ArrayBuffer;
+			timestamp: number;
+			expiresAt: number;
+			fileSize: number;
+			etag: string | null;
+		};
+	};
 }
 ```
 
@@ -70,10 +74,12 @@ interface ParquetCacheDB {
 **Decision**: Two-tier validation (TTL + ETag)
 
 **Rationale**:
+
 - **TTL (Time-To-Live)**: Fast local check, no network required
 - **ETag**: Server-side validation when TTL expires, saves bandwidth if unchanged
 
 **Flow**:
+
 ```
 1. Check local TTL → if valid, use cache (no network)
 2. If TTL expired and ETag exists:
@@ -97,6 +103,7 @@ interface ParquetCacheDB {
 **Decision**: Fail-open to network mode
 
 **Rationale**:
+
 - Cache is an optimization, not a requirement
 - Users should never be blocked from accessing data due to cache issues
 - Silent fallback preferred over error popups
@@ -118,17 +125,20 @@ interface ParquetCacheDB {
 **Decision**: `PUBLIC_CACHE_TTL` environment variable
 
 **Rationale**:
+
 - SvelteKit convention for client-exposed variables (`PUBLIC_` prefix)
 - Milliseconds format for precision
 - Default value in code, override via `.env`
 
 **Configuration**:
+
 ```bash
 # .env (optional)
 PUBLIC_CACHE_TTL=3600000  # 1 hour in milliseconds (default)
 ```
 
 **Parsing**:
+
 ```typescript
 const DEFAULT_TTL = 60 * 60 * 1000; // 1 hour
 const ttl = parseInt(import.meta.env.PUBLIC_CACHE_TTL || '', 10) || DEFAULT_TTL;
@@ -141,11 +151,13 @@ const ttl = parseInt(import.meta.env.PUBLIC_CACHE_TTL || '', 10) || DEFAULT_TTL;
 **Decision**: Standalone `CacheIndicator` component with Svelte 5 runes
 
 **Rationale**:
+
 - Constitution Principle IV requires component independence
 - Component receives cache status via context, manages own display state
 - Uses `$derived` for computed display values
 
 **Component API**:
+
 ```svelte
 <CacheIndicator />
 <!-- Renders: "Cached • Last updated: 2:30 PM" with refresh button -->
@@ -154,6 +166,7 @@ const ttl = parseInt(import.meta.env.PUBLIC_CACHE_TTL || '', 10) || DEFAULT_TTL;
 ```
 
 **State Sources**:
+
 - Cache status from DataProvider context
 - Timestamp formatting handled internally
 - Refresh action triggers context's `refresh()` method

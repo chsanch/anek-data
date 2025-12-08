@@ -51,6 +51,7 @@
 **Independent Test**: Load a parquet file from configured URL and verify data appears in the orders table. User sees loading indicator during download and error message if fetch fails.
 
 **Acceptance Criteria**:
+
 - Auto-load on app start with loading indicator visible within 500ms
 - Orders table displays records from loaded parquet file
 - Clear error message shown if remote server is unreachable
@@ -78,7 +79,8 @@
 **Independent Test**: Load sample data and verify that dashboard stat cards display correct calculated values matching SQL query results.
 
 **Acceptance Criteria**:
-- "Total Trades" stat card shows COUNT(*) of all orders
+
+- "Total Trades" stat card shows COUNT(\*) of all orders
 - "Total Volume" stat card shows SUM(sell_amount_cents) formatted correctly
 - "Open Orders" stat card shows count where status = 'open'
 - Stat cards display zero/empty states when no data loaded
@@ -103,6 +105,7 @@
 **Independent Test**: Load data with multiple currencies and verify the currency breakdown section shows accurate volume per currency, sorted correctly.
 
 **Acceptance Criteria**:
+
 - Each currency displays its total volume (sum of sellAmountCents)
 - Currencies are sorted by volume descending
 - Currency breakdown updates on data refresh
@@ -162,26 +165,31 @@
 ### Parallel Opportunities
 
 **Phase 1 (Setup):**
+
 ```
 T002, T003, T004, T005 can all run in parallel
 ```
 
 **Phase 2 (Foundational):**
+
 ```
 T008, T009 can run in parallel (LoadingIndicator and ErrorMessage components)
 ```
 
 **User Story 1:**
+
 ```
 No parallel opportunities - sequential dependency chain
 ```
 
 **User Story 2:**
+
 ```
 T020 (queries) → T021 (stats service) → T022-T025 (integration)
 ```
 
 **Phase 6 (Polish):**
+
 ```
 T030, T031, T032 can all run in parallel
 ```
@@ -229,6 +237,7 @@ Task: "Create ErrorMessage component in src/lib/components/ErrorMessage.svelte"
 ### Single Developer Strategy
 
 Execute phases sequentially in order:
+
 1. Setup (Phase 1)
 2. Foundational (Phase 2)
 3. User Story 1 (Phase 3) - P1 Priority
@@ -242,28 +251,28 @@ Execute phases sequentially in order:
 
 ### New Files to Create
 
-| File | Phase | Purpose |
-|------|-------|---------|
-| `.env` | Setup | Environment configuration |
-| `src/lib/db/types.ts` | Setup | TypeScript type definitions |
-| `src/lib/db/duckdb.ts` | Foundational | DuckDB singleton initialization |
-| `src/lib/db/loader.ts` | Foundational | Parquet loading logic |
-| `src/lib/db/queries.ts` | US1 | SQL query definitions |
-| `src/lib/db/stats.svelte.ts` | US2 | Reactive statistics service |
-| `src/lib/components/LoadingIndicator.svelte` | Foundational | Loading UI |
-| `src/lib/components/ErrorMessage.svelte` | Foundational | Error display |
-| `src/lib/components/DataProvider.svelte` | Foundational | Context provider |
-| `src/lib/components/RefreshButton.svelte` | US1 | Manual refresh |
+| File                                         | Phase        | Purpose                         |
+| -------------------------------------------- | ------------ | ------------------------------- |
+| `.env`                                       | Setup        | Environment configuration       |
+| `src/lib/db/types.ts`                        | Setup        | TypeScript type definitions     |
+| `src/lib/db/duckdb.ts`                       | Foundational | DuckDB singleton initialization |
+| `src/lib/db/loader.ts`                       | Foundational | Parquet loading logic           |
+| `src/lib/db/queries.ts`                      | US1          | SQL query definitions           |
+| `src/lib/db/stats.svelte.ts`                 | US2          | Reactive statistics service     |
+| `src/lib/components/LoadingIndicator.svelte` | Foundational | Loading UI                      |
+| `src/lib/components/ErrorMessage.svelte`     | Foundational | Error display                   |
+| `src/lib/components/DataProvider.svelte`     | Foundational | Context provider                |
+| `src/lib/components/RefreshButton.svelte`    | US1          | Manual refresh                  |
 
 ### Files to Modify
 
-| File | Phase | Changes |
-|------|-------|---------|
-| `src/app.d.ts` | Setup | Add env type declaration |
-| `src/routes/+layout.svelte` | Foundational | Wrap with DataProvider |
-| `src/routes/+page.svelte` | US1-US3 | Replace mock data with real data |
-| `src/lib/components/StatCard.svelte` | US2 | Add loading state handling |
-| `src/lib/components/OrdersTable.svelte` | US1 | SQL pagination, loading states |
+| File                                    | Phase        | Changes                          |
+| --------------------------------------- | ------------ | -------------------------------- |
+| `src/app.d.ts`                          | Setup        | Add env type declaration         |
+| `src/routes/+layout.svelte`             | Foundational | Wrap with DataProvider           |
+| `src/routes/+page.svelte`               | US1-US3      | Replace mock data with real data |
+| `src/lib/components/StatCard.svelte`    | US2          | Add loading state handling       |
+| `src/lib/components/OrdersTable.svelte` | US1          | SQL pagination, loading states   |
 
 ---
 

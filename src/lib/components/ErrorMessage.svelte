@@ -33,9 +33,7 @@
 		{/if}
 	</div>
 	{#if onRetry}
-		<button class="retry-button" onclick={onRetry}>
-			Retry
-		</button>
+		<button class="retry-button" onclick={onRetry}> Retry </button>
 	{/if}
 </div>
 

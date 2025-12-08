@@ -35,9 +35,7 @@
 					<h3 class="error-title">Something went wrong</h3>
 					<p class="error-message">{getErrorMessage(error)}</p>
 				</div>
-				<button class="retry-button" onclick={reset}>
-					Try again
-				</button>
+				<button class="retry-button" onclick={reset}> Try again </button>
 			</div>
 		{/if}
 	{/snippet}

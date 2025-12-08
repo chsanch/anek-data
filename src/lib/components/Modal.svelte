@@ -28,12 +28,26 @@
 
 {#if open}
 	<!-- svelte-ignore a11y_click_events_have_key_events a11y_interactive_supports_focus a11y_no_noninteractive_tabindex -->
-	<div class="modal-backdrop" onclick={handleBackdropClick} role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
+	<div
+		class="modal-backdrop"
+		onclick={handleBackdropClick}
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="modal-title"
+		tabindex="-1"
+	>
 		<div class="modal">
 			<div class="modal-header">
 				<h2 id="modal-title" class="modal-title">{title}</h2>
 				<button class="modal-close" onclick={onclose} aria-label="Close modal">
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<svg
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
 						<path d="M18 6L6 18M6 6l12 12" />
 					</svg>
 				</button>

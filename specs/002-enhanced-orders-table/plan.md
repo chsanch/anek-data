@@ -21,17 +21,18 @@ Enhance the orders table with professional UX features: column sorting, page siz
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| I. Local-First Architecture | PASS | All sorting/filtering via DuckDB WASM client-side |
-| II. Data Integrity & Sync | PASS | No data modification, read-only table operations |
-| III. Performance-First Design | PASS | Client-side ops target <200ms, TanStack handles state |
-| IV. Component Independence | PASS | Table component self-contained with own state |
-| V. Simplicity Over Flexibility | PASS | TanStack is headless (minimal bundle), no abstraction layers |
+| Principle                      | Status | Notes                                                        |
+| ------------------------------ | ------ | ------------------------------------------------------------ |
+| I. Local-First Architecture    | PASS   | All sorting/filtering via DuckDB WASM client-side            |
+| II. Data Integrity & Sync      | PASS   | No data modification, read-only table operations             |
+| III. Performance-First Design  | PASS   | Client-side ops target <200ms, TanStack handles state        |
+| IV. Component Independence     | PASS   | Table component self-contained with own state                |
+| V. Simplicity Over Flexibility | PASS   | TanStack is headless (minimal bundle), no abstraction layers |
 
 **NOT in scope validation**:
+
 - No additional charting libraries needed
 - No state management libraries (TanStack uses Svelte's native reactivity)
 - Direct DuckDB SQL preserved for queries
@@ -86,6 +87,7 @@ src/
 ## Complexity Tracking
 
 No constitution violations. TanStack Table is:
+
 - Headless (no styling conflicts with existing design)
 - ~15KB gzipped (acceptable bundle impact)
 - Framework-agnostic core with Svelte adapter

@@ -113,34 +113,46 @@ export class ParquetCacheService {
 
 		this.updateStatus({ state: 'checking' });
 
+		let cachedEntry: CachedParquet | undefined;
+
 		// Check cache first (unless force refresh)
 		if (!forceRefresh && this.db) {
 			try {
 				const entry = await this.db.get('parquet-cache', url);
 				if (entry) {
-					const now = Date.now();
-					const isValid = entry.expiresAt > now;
+					// Validate cache entry is not corrupted
+					if (!this.isValidCacheEntry(entry)) {
+						console.warn('Corrupted cache entry detected, deleting and fetching fresh data');
+						await this.clearCache(url);
+						// Continue to network fetch
+					} else {
+						const now = Date.now();
+						const isValid = entry.expiresAt > now;
 
-					if (isValid) {
-						// Cache hit - return cached data
-						this.updateStatus({
-							state: 'ready',
-							timestamp: entry.timestamp,
-							isStale: false,
-							source: 'cache'
-						});
-
-						return {
-							data: entry.data,
-							fromCache: true,
-							metadata: {
-								url: entry.url,
+						if (isValid) {
+							// Cache hit - return cached data
+							this.updateStatus({
+								state: 'ready',
 								timestamp: entry.timestamp,
-								expiresAt: entry.expiresAt,
-								fileSize: entry.fileSize,
-								etag: entry.etag
-							}
-						};
+								isStale: false,
+								source: 'cache'
+							});
+
+							return {
+								data: entry.data,
+								fromCache: true,
+								metadata: {
+									url: entry.url,
+									timestamp: entry.timestamp,
+									expiresAt: entry.expiresAt,
+									fileSize: entry.fileSize,
+									etag: entry.etag
+								}
+							};
+						}
+
+						// Cache expired but exists - save for conditional request
+						cachedEntry = entry;
 					}
 				}
 			} catch (error) {
@@ -149,16 +161,44 @@ export class ParquetCacheService {
 			}
 		}
 
-		// Cache miss or force refresh - fetch from network
+		// Cache miss, expired, or force refresh - fetch from network
 		this.updateStatus({ state: 'loading' });
 
 		try {
-			const response = await fetch(url);
+			// Build fetch options with conditional headers if we have a cached ETag
+			const fetchOptions: RequestInit = {};
+			if (cachedEntry?.etag && !forceRefresh) {
+				fetchOptions.headers = {
+					'If-None-Match': cachedEntry.etag
+				};
+			}
+
+			const response = await fetch(url, fetchOptions);
+
+			// Handle 304 Not Modified - cache is still valid
+			if (response.status === 304 && cachedEntry) {
+				// Extend cache TTL without re-downloading
+				const metadata = await this.extendCacheTTL(url, cachedEntry);
+
+				this.updateStatus({
+					state: 'ready',
+					timestamp: cachedEntry.timestamp,
+					isStale: false,
+					source: 'cache'
+				});
+
+				return {
+					data: cachedEntry.data,
+					fromCache: true,
+					metadata
+				};
+			}
 
 			if (!response.ok) {
 				throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
 			}
 
+			// New data received (200 OK)
 			const data = await response.arrayBuffer();
 			const etag = response.headers.get('etag');
 
@@ -181,7 +221,7 @@ export class ParquetCacheService {
 			// Network failed - try to use stale cache as fallback
 			if (this.db) {
 				try {
-					const entry = await this.db.get('parquet-cache', url);
+					const entry = cachedEntry || (await this.db.get('parquet-cache', url));
 					if (entry) {
 						console.warn('Network failed, using stale cache:', error);
 						this.updateStatus({
@@ -212,6 +252,34 @@ export class ParquetCacheService {
 			this.updateStatus({ state: 'error' });
 			throw error;
 		}
+	}
+
+	/**
+	 * Extend cache TTL without re-downloading data (used for 304 responses)
+	 * @internal
+	 */
+	private async extendCacheTTL(url: string, entry: CachedParquet): Promise<CacheMetadata> {
+		const now = Date.now();
+		const updatedEntry: CachedParquet = {
+			...entry,
+			expiresAt: now + this.config.ttl
+		};
+
+		if (this.db) {
+			try {
+				await this.db.put('parquet-cache', updatedEntry);
+			} catch (error) {
+				console.warn('Failed to extend cache TTL:', error);
+			}
+		}
+
+		return {
+			url: updatedEntry.url,
+			timestamp: updatedEntry.timestamp,
+			expiresAt: updatedEntry.expiresAt,
+			fileSize: updatedEntry.fileSize,
+			etag: updatedEntry.etag
+		};
 	}
 
 	/**
@@ -270,7 +338,15 @@ export class ParquetCacheService {
 			try {
 				await this.db.put('parquet-cache', entry);
 			} catch (error) {
-				console.warn('Failed to store cache:', error);
+				// Handle storage quota exceeded
+				if (this.isQuotaExceededError(error)) {
+					console.warn(
+						'Storage quota exceeded, skipping cache storage. Data will be fetched from network on next load.'
+					);
+				} else {
+					console.warn('Failed to store cache:', error);
+				}
+				// Continue without caching - graceful degradation
 			}
 		}
 
@@ -281,6 +357,45 @@ export class ParquetCacheService {
 			fileSize: entry.fileSize,
 			etag: entry.etag
 		};
+	}
+
+	/**
+	 * Check if error is a storage quota exceeded error
+	 * @internal
+	 */
+	private isQuotaExceededError(error: unknown): boolean {
+		if (error instanceof DOMException) {
+			// Standard quota exceeded error names
+			return (
+				error.name === 'QuotaExceededError' ||
+				error.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+				error.code === 22 // Legacy code for quota exceeded
+			);
+		}
+		return false;
+	}
+
+	/**
+	 * Validate that cached data is not corrupted
+	 * @internal
+	 */
+	private isValidCacheEntry(entry: CachedParquet): boolean {
+		// Check that required fields exist
+		if (!entry.url || !entry.data || typeof entry.timestamp !== 'number') {
+			return false;
+		}
+
+		// Check that data is a valid ArrayBuffer with content
+		if (!(entry.data instanceof ArrayBuffer) || entry.data.byteLength === 0) {
+			return false;
+		}
+
+		// Check that fileSize matches actual data size
+		if (entry.fileSize !== entry.data.byteLength) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

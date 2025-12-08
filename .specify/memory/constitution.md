@@ -23,6 +23,7 @@ Follow-up TODOs: None
 ### I. Local-First Architecture
 
 All analytics processing MUST occur in the browser using DuckDB WASM. Server interactions are limited to:
+
 - Initial bulk data download (Parquet format)
 - Incremental sync updates (JSON API)
 - No real-time server-side query execution for analytics
@@ -32,6 +33,7 @@ All analytics processing MUST occur in the browser using DuckDB WASM. Server int
 ### II. Data Integrity & Sync
 
 Data synchronization MUST follow this hierarchy:
+
 - Parquet files serve as the source of truth for bulk historical data
 - IndexedDB provides client-side persistence for offline access
 - Delta sync via JSON API keeps local data current
@@ -42,6 +44,7 @@ Data synchronization MUST follow this hierarchy:
 ### III. Performance-First Design
 
 The application MUST meet these performance targets:
+
 - Initial Parquet load: < 500ms for 20K orders
 - Simple aggregation queries: < 50ms
 - Complex GROUP BY queries: < 200ms
@@ -52,6 +55,7 @@ The application MUST meet these performance targets:
 ### IV. Component Independence
 
 Each dashboard component (chart, table, filter) MUST:
+
 - Manage its own data subscriptions
 - Handle loading and error states independently
 - Be testable in isolation using Vitest
@@ -62,6 +66,7 @@ Each dashboard component (chart, table, filter) MUST:
 ### V. Simplicity Over Flexibility
 
 Implementation decisions MUST favor:
+
 - Lightweight Charts for time-series (professional trading look, small bundle)
 - HTML tables for categorical data over additional charting libraries
 - Direct DuckDB SQL over abstraction layers
@@ -80,11 +85,13 @@ Implementation decisions MUST favor:
 **Build**: Vite 7
 
 **Data Formats**:
+
 - Storage/Transfer: Apache Parquet
 - In-Memory: Apache Arrow (handled by DuckDB)
 - API Sync: JSON
 
 **NOT in scope** (avoid adding without explicit justification):
+
 - Additional charting libraries (ECharts, Chart.js)
 - State management libraries (stores are sufficient)
 - ORM or query builders (use raw SQL)

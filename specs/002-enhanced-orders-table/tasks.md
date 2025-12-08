@@ -93,6 +93,7 @@
 **Independent Test**: Type "KCH-X87" → only orders with reference containing "KCH-X87" shown. Clear → all rows return.
 
 **Implementation Note**: Changed from "global text search across all columns" to "reference-only search" because:
+
 - `reference` is the only truly searchable text field in the orders data
 - Other fields (status, type, currency, LP) have limited enumerable values better suited for dropdown filters (US4)
 - Uses SQL `WHERE reference ILIKE '%search%'` for efficient server-side filtering
@@ -251,6 +252,7 @@ Task T029 depends on T028 (dropdowns must be in toolbar)
 ### Single Developer Strategy
 
 Execute phases sequentially in priority order:
+
 1. Setup → Foundational → US1 → validate
 2. US2 → US3 → US4 → US5 → validate
 3. Polish → final validation

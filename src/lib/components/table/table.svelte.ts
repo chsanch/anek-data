@@ -1,9 +1,9 @@
 import {
-  createTable,
-  type RowData,
-  type TableOptions,
-  type TableOptionsResolved,
-  type TableState
+	createTable,
+	type RowData,
+	type TableOptions,
+	type TableOptionsResolved,
+	type TableState
 } from '@tanstack/table-core';
 
 /**
@@ -13,47 +13,47 @@ import {
  * @returns A reactive table object.
  */
 export function createSvelteTable<TData extends RowData>(options: TableOptions<TData>) {
-  const resolvedOptions: TableOptionsResolved<TData> = mergeObjects(
-    {
-      state: {},
-      onStateChange() {},
-      renderFallbackValue: null,
-      mergeOptions: (
-        defaultOptions: TableOptions<TData>,
-        options: Partial<TableOptions<TData>>
-      ) => {
-        return mergeObjects(defaultOptions, options);
-      }
-    },
-    options
-  );
+	const resolvedOptions: TableOptionsResolved<TData> = mergeObjects(
+		{
+			state: {},
+			onStateChange() {},
+			renderFallbackValue: null,
+			mergeOptions: (
+				defaultOptions: TableOptions<TData>,
+				options: Partial<TableOptions<TData>>
+			) => {
+				return mergeObjects(defaultOptions, options);
+			}
+		},
+		options
+	);
 
-  const table = createTable(resolvedOptions);
-  let state = $state<Partial<TableState>>(table.initialState);
+	const table = createTable(resolvedOptions);
+	let state = $state<Partial<TableState>>(table.initialState);
 
-  function updateOptions() {
-    table.setOptions((prev) => {
-      return mergeObjects(prev, options, {
-        state: mergeObjects(state, options.state || {}),
+	function updateOptions() {
+		table.setOptions((prev) => {
+			return mergeObjects(prev, options, {
+				state: mergeObjects(state, options.state || {}),
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onStateChange: (updater: any) => {
-          if (updater instanceof Function) state = updater(state);
-          else state = mergeObjects(state, updater as Partial<TableState>);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				onStateChange: (updater: any) => {
+					if (updater instanceof Function) state = updater(state);
+					else state = mergeObjects(state, updater as Partial<TableState>);
 
-          options.onStateChange?.(updater);
-        }
-      });
-    });
-  }
+					options.onStateChange?.(updater);
+				}
+			});
+		});
+	}
 
-  updateOptions();
+	updateOptions();
 
-  $effect.pre(() => {
-    updateOptions();
-  });
+	$effect.pre(() => {
+		updateOptions();
+	});
 
-  return table;
+	return table;
 }
 
 /**
@@ -64,33 +64,33 @@ export function mergeObjects<T>(source: T): T;
 export function mergeObjects<T, U>(source: T, source1: U): T & U;
 export function mergeObjects<T, U, V>(source: T, source1: U, source2: V): T & U & V;
 export function mergeObjects<T, U, V, W>(
-  source: T,
-  source1: U,
-  source2: V,
-  source3: W
+	source: T,
+	source1: U,
+	source2: V,
+	source3: W
 ): T & U & V & W;
 export function mergeObjects(...sources: unknown[]): unknown {
-  const target: Record<string, unknown> = {};
-  for (let i = 0; i < sources.length; i++) {
-    let source = sources[i];
-    if (typeof source === 'function') source = (source as () => unknown)();
-    if (source) {
-      const descriptors = Object.getOwnPropertyDescriptors(source);
-      for (const key in descriptors) {
-        if (key in target) continue;
-        Object.defineProperty(target, key, {
-          enumerable: true,
-          get() {
-            for (let j = sources.length - 1; j >= 0; j--) {
-              let s = sources[j];
-              if (typeof s === 'function') s = (s as () => unknown)();
-              const v = (s as Record<string, unknown> || {})[key];
-              if (v !== undefined) return v;
-            }
-          }
-        });
-      }
-    }
-  }
-  return target;
+	const target: Record<string, unknown> = {};
+	for (let i = 0; i < sources.length; i++) {
+		let source = sources[i];
+		if (typeof source === 'function') source = (source as () => unknown)();
+		if (source) {
+			const descriptors = Object.getOwnPropertyDescriptors(source);
+			for (const key in descriptors) {
+				if (key in target) continue;
+				Object.defineProperty(target, key, {
+					enumerable: true,
+					get() {
+						for (let j = sources.length - 1; j >= 0; j--) {
+							let s = sources[j];
+							if (typeof s === 'function') s = (s as () => unknown)();
+							const v = ((s as Record<string, unknown>) || {})[key];
+							if (v !== undefined) return v;
+						}
+					}
+				});
+			}
+		}
+	}
+	return target;
 }

@@ -5,7 +5,7 @@
 **Status**: Draft
 **Input**: User description: "Provide a better UX/UI for the table that displays orders. Features include pagination, sorting, filtering, page size control, and the ability to download filtered results."
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Column Sorting (Priority: P1)
 
@@ -47,6 +47,7 @@ As a user, I want to search orders by reference number so I can quickly find a s
 **Why this priority**: Reference search provides the most practical text search capability for this dataset. Other fields (status, type, currency, LP) are better served by dropdown filters (US4) since they have limited, enumerable values.
 
 **Implementation Note**: Changed from "global text search across all columns" to "reference-only search" because:
+
 - `reference` is the only truly searchable text field
 - Other text fields (currency, status, type, LP) have limited values better suited for dropdown filters
 - Searching across all columns would be overkill and potentially confusing
@@ -104,7 +105,7 @@ As a user, I want to export the currently filtered/sorted view as CSV so I can a
 - What happens when page size change results in invalid page? Reset to page 1 and recalculate pagination.
 - What happens when data is still loading and user tries to filter/sort? Queue the operation or disable controls until data loads.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -129,7 +130,7 @@ As a user, I want to export the currently filtered/sorted view as CSV so I can a
 - **ColumnDefinition**: Configuration for each table column including sortable flag, filterable flag, filter type (text/select), and filter options
 - **FilterCriteria**: Active filters including search term, column-specific filters, and their values
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

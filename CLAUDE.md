@@ -25,36 +25,43 @@
 You have access to the Svelte MCP server with comprehensive Svelte 5 and SvelteKit documentation. Use these tools effectively:
 
 ### 1. list-sections
+
 Use this FIRST to discover all available documentation sections. Returns a structured list with titles, use_cases, and paths.
 When asked about Svelte or SvelteKit topics, ALWAYS use this tool at the start of the chat to find relevant sections.
 
 ### 2. get-documentation
+
 Retrieves full documentation content for specific sections. Accepts single or multiple sections.
 After calling the list-sections tool, you MUST analyze the returned documentation sections (especially the use_cases field) and then use the get-documentation tool to fetch ALL documentation sections that are relevant for the user's task.
 
 ### 3. svelte-autofixer
+
 Analyzes Svelte code and returns issues and suggestions.
 You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
 
 ### 4. playground-link
+
 Generates a Svelte Playground link with the provided code.
 After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
 
 ## Code Quality Standards
 
 ### Svelte 5 Best Practices
+
 - Use runes (`$state`, `$derived`, `$effect`) instead of stores for component state
 - Use `$props()` for component props
 - Use Svelte context API for sharing state across components (SSR-safe)
 - Avoid `onMount` for data fetching when possible; prefer load functions or context
 
 ### TypeScript
+
 - All code must be strictly typed
 - Use interfaces for object shapes
 - Use discriminated unions for error types
 - Prefer `unknown` over `any`
 
 ### File Naming
+
 - Components: `PascalCase.svelte`
 - Modules: `kebab-case.ts` or `camelCase.ts`
 - Svelte modules with runes: `*.svelte.ts`
@@ -102,10 +109,12 @@ cd /path/to/parquet/files && python3 -m http.server 8888
 Then set `PUBLIC_PARQUET_URL=http://localhost:8888/orders.parquet` in `.env`
 
 ## Active Technologies
+
 - TypeScript 5.x (strict mode) + Svelte 5, SvelteKit, @tanstack/svelte-table, DuckDB WASM (002-enhanced-orders-table)
 - DuckDB WASM (in-browser), IndexedDB (persistence) (002-enhanced-orders-table)
 - TypeScript 5.x (strict mode) + SvelteKit, Svelte 5, @duckdb/duckdb-wasm, idb (IndexedDB wrapper) (003-parquet-cache)
 - IndexedDB (browser persistence for parquet buffers) (003-parquet-cache)
 
 ## Recent Changes
+
 - 002-enhanced-orders-table: Added TypeScript 5.x (strict mode) + Svelte 5, SvelteKit, @tanstack/svelte-table, DuckDB WASM

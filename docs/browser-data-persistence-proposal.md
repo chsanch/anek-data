@@ -34,14 +34,14 @@ Page Load
 
 ### Key Decisions
 
-| Decision | Choice |
-|----------|--------|
-| Storage mechanism | IndexedDB (persistent, survives browser restart) |
-| Default TTL | 1 hour |
-| Cache invalidation | Time-based + ETag headers |
-| UI indicator | Yes - show cache status and last download time |
-| Manual refresh | Yes - button to force re-download |
-| Scope | Single table (`orders`) for now |
+| Decision           | Choice                                           |
+| ------------------ | ------------------------------------------------ |
+| Storage mechanism  | IndexedDB (persistent, survives browser restart) |
+| Default TTL        | 1 hour                                           |
+| Cache invalidation | Time-based + ETag headers                        |
+| UI indicator       | Yes - show cache status and last download time   |
+| Manual refresh     | Yes - button to force re-download                |
+| Scope              | Single table (`orders`) for now                  |
 
 ---
 
@@ -49,12 +49,12 @@ Page Load
 
 ```typescript
 interface CachedParquet {
-  url: string;           // Source URL
-  data: ArrayBuffer;     // Raw parquet file
-  timestamp: number;     // When downloaded
-  expiresAt: number;     // TTL expiration
-  fileSize: number;      // For display
-  etag?: string;         // Server ETag for validation
+	url: string; // Source URL
+	data: ArrayBuffer; // Raw parquet file
+	timestamp: number; // When downloaded
+	expiresAt: number; // TTL expiration
+	fileSize: number; // For display
+	etag?: string; // Server ETag for validation
 }
 ```
 
@@ -72,12 +72,12 @@ interface CachedParquet {
 
 ## Implementation Files
 
-| File | Purpose |
-|------|---------|
-| `src/lib/db/cache.ts` | ParquetCacheService class |
-| `src/lib/db/loader.ts` | Update to use cache layer |
-| `src/lib/components/DataProvider.svelte` | Integrate cache, expose refresh |
-| `src/lib/components/CacheIndicator.svelte` | UI component for cache status |
+| File                                       | Purpose                         |
+| ------------------------------------------ | ------------------------------- |
+| `src/lib/db/cache.ts`                      | ParquetCacheService class       |
+| `src/lib/db/loader.ts`                     | Update to use cache layer       |
+| `src/lib/components/DataProvider.svelte`   | Integrate cache, expose refresh |
+| `src/lib/components/CacheIndicator.svelte` | UI component for cache status   |
 
 ## Environment Variables
 

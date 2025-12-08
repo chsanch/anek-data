@@ -10,7 +10,12 @@
 	let { label, value, prefix, suffix, variant = 'default' }: Props = $props();
 </script>
 
-<div class="stat-card" class:primary={variant === 'primary'} class:highlight={variant === 'highlight'} class:rate={variant === 'rate'}>
+<div
+	class="stat-card"
+	class:primary={variant === 'primary'}
+	class:highlight={variant === 'highlight'}
+	class:rate={variant === 'rate'}
+>
 	<span class="stat-label">{label}</span>
 	<div class="stat-value-container">
 		{#if prefix}

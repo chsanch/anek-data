@@ -7,7 +7,9 @@ body {
 	color: var(--text-primary);
 	margin: 0;
 	min-height: 100vh;
-	transition: background-color 0.3s ease, color 0.3s ease;
+	transition:
+		background-color 0.3s ease,
+		color 0.3s ease;
 }
 
 /* Base variables - Light theme is default (follows system) */
@@ -50,9 +52,21 @@ body {
 
 	/* Gradients */
 	--gradient-primary: linear-gradient(135deg, #059669 0%, #047857 100%);
-	--gradient-primary-subtle: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(4, 120, 87, 0.04) 100%);
-	--gradient-warning-subtle: linear-gradient(135deg, rgba(217, 119, 6, 0.08) 0%, rgba(180, 83, 9, 0.04) 100%);
-	--gradient-purple-subtle: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(109, 40, 217, 0.04) 100%);
+	--gradient-primary-subtle: linear-gradient(
+		135deg,
+		rgba(5, 150, 105, 0.08) 0%,
+		rgba(4, 120, 87, 0.04) 100%
+	);
+	--gradient-warning-subtle: linear-gradient(
+		135deg,
+		rgba(217, 119, 6, 0.08) 0%,
+		rgba(180, 83, 9, 0.04) 100%
+	);
+	--gradient-purple-subtle: linear-gradient(
+		135deg,
+		rgba(124, 58, 237, 0.08) 0%,
+		rgba(109, 40, 217, 0.04) 100%
+	);
 	--gradient-bar: linear-gradient(90deg, #059669 0%, #047857 100%);
 
 	/* Table */
@@ -100,9 +114,21 @@ body {
 	--accent-neutral-bg: rgba(100, 116, 139, 0.12);
 
 	--gradient-primary: linear-gradient(135deg, #059669 0%, #047857 100%);
-	--gradient-primary-subtle: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(4, 120, 87, 0.04) 100%);
-	--gradient-warning-subtle: linear-gradient(135deg, rgba(217, 119, 6, 0.08) 0%, rgba(180, 83, 9, 0.04) 100%);
-	--gradient-purple-subtle: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(109, 40, 217, 0.04) 100%);
+	--gradient-primary-subtle: linear-gradient(
+		135deg,
+		rgba(5, 150, 105, 0.08) 0%,
+		rgba(4, 120, 87, 0.04) 100%
+	);
+	--gradient-warning-subtle: linear-gradient(
+		135deg,
+		rgba(217, 119, 6, 0.08) 0%,
+		rgba(180, 83, 9, 0.04) 100%
+	);
+	--gradient-purple-subtle: linear-gradient(
+		135deg,
+		rgba(124, 58, 237, 0.08) 0%,
+		rgba(109, 40, 217, 0.04) 100%
+	);
 	--gradient-bar: linear-gradient(90deg, #059669 0%, #047857 100%);
 
 	--table-row-hover: rgba(0, 0, 0, 0.02);
@@ -145,9 +171,21 @@ body {
 	--accent-neutral-bg: rgba(156, 163, 175, 0.15);
 
 	--gradient-primary: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
-	--gradient-primary-subtle: linear-gradient(135deg, rgba(0, 212, 170, 0.08) 0%, rgba(0, 184, 148, 0.04) 100%);
-	--gradient-warning-subtle: linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(245, 158, 11, 0.04) 100%);
-	--gradient-purple-subtle: linear-gradient(135deg, rgba(129, 140, 248, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%);
+	--gradient-primary-subtle: linear-gradient(
+		135deg,
+		rgba(0, 212, 170, 0.08) 0%,
+		rgba(0, 184, 148, 0.04) 100%
+	);
+	--gradient-warning-subtle: linear-gradient(
+		135deg,
+		rgba(251, 191, 36, 0.08) 0%,
+		rgba(245, 158, 11, 0.04) 100%
+	);
+	--gradient-purple-subtle: linear-gradient(
+		135deg,
+		rgba(129, 140, 248, 0.08) 0%,
+		rgba(99, 102, 241, 0.04) 100%
+	);
 	--gradient-bar: linear-gradient(90deg, #00d4aa 0%, #00b894 100%);
 
 	--table-row-hover: rgba(255, 255, 255, 0.02);
@@ -191,9 +229,21 @@ body {
 		--accent-neutral-bg: rgba(156, 163, 175, 0.15);
 
 		--gradient-primary: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
-		--gradient-primary-subtle: linear-gradient(135deg, rgba(0, 212, 170, 0.08) 0%, rgba(0, 184, 148, 0.04) 100%);
-		--gradient-warning-subtle: linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(245, 158, 11, 0.04) 100%);
-		--gradient-purple-subtle: linear-gradient(135deg, rgba(129, 140, 248, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%);
+		--gradient-primary-subtle: linear-gradient(
+			135deg,
+			rgba(0, 212, 170, 0.08) 0%,
+			rgba(0, 184, 148, 0.04) 100%
+		);
+		--gradient-warning-subtle: linear-gradient(
+			135deg,
+			rgba(251, 191, 36, 0.08) 0%,
+			rgba(245, 158, 11, 0.04) 100%
+		);
+		--gradient-purple-subtle: linear-gradient(
+			135deg,
+			rgba(129, 140, 248, 0.08) 0%,
+			rgba(99, 102, 241, 0.04) 100%
+		);
 		--gradient-bar: linear-gradient(90deg, #00d4aa 0%, #00b894 100%);
 
 		--table-row-hover: rgba(255, 255, 255, 0.02);
