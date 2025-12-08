@@ -10,4 +10,8 @@ declare global {
 	}
 }
 
+declare module '$env/static/public' {
+	export const PUBLIC_PARQUET_URL: string;
+}
+
 export {};
