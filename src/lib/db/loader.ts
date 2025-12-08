@@ -1,5 +1,7 @@
 import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
 import type { DataError } from './types';
+import type { ParquetCacheService } from './cache';
+import type { LoadResult } from './cache-types';
 
 const EXPECTED_COLUMNS = [
 	'id',
@@ -103,4 +105,56 @@ export async function getOrderCount(db: AsyncDuckDB): Promise<number> {
 	} finally {
 		await conn.close();
 	}
+}
+
+/**
+ * Load a Parquet file using cache service
+ * Uses IndexedDB cache when available, falls back to network
+ *
+ * @param db - DuckDB instance
+ * @param url - URL to fetch parquet from
+ * @param cacheService - Cache service instance
+ * @param options - Load options
+ * @returns LoadResult with cache metadata
+ */
+export async function loadParquetWithCache(
+	db: AsyncDuckDB,
+	url: string,
+	cacheService: ParquetCacheService,
+	options?: { forceRefresh?: boolean }
+): Promise<LoadResult> {
+	// Load data from cache or network
+	const result = await cacheService.loadData(url, options);
+
+	if (result.data.byteLength === 0) {
+		const error: DataError = {
+			type: 'parse',
+			message: 'Parquet file is empty',
+			details: url
+		};
+		throw error;
+	}
+
+	// Register the file buffer with DuckDB
+	await db.registerFileBuffer('orders.parquet', new Uint8Array(result.data));
+
+	// Create the table from the parquet file
+	const conn = await db.connect();
+	try {
+		await conn.query(`
+			CREATE OR REPLACE TABLE orders AS
+			SELECT * FROM read_parquet('orders.parquet')
+		`);
+	} catch (e) {
+		const error: DataError = {
+			type: 'parse',
+			message: 'Failed to parse parquet file',
+			details: e instanceof Error ? e.message : String(e)
+		};
+		throw error;
+	} finally {
+		await conn.close();
+	}
+
+	return result;
 }

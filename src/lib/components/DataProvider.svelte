@@ -2,11 +2,14 @@
 	import { setContext, onMount } from 'svelte';
 	import type { Snippet } from 'svelte';
 	import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
-	import { PUBLIC_PARQUET_URL } from '$env/static/public';
+	import { PUBLIC_PARQUET_URL, PUBLIC_CACHE_TTL } from '$env/static/public';
 	import { initDuckDB } from '$lib/db/duckdb';
-	import { loadParquetFromUrl, validateSchema } from '$lib/db/loader';
+	import { loadParquetWithCache, validateSchema } from '$lib/db/loader';
 	import type { DataState, DataError } from '$lib/db/types';
 	import { DATA_PROVIDER_KEY } from '$lib/db/context';
+	import { ParquetCacheService } from '$lib/db/cache';
+	import { INITIAL_CACHE_STATUS } from '$lib/db/cache-types';
+	import type { CacheStatus } from '$lib/db/cache-types';
 
 	interface Props {
 		children: Snippet;
@@ -14,7 +17,12 @@
 
 	let { children }: Props = $props();
 
+	// Parse TTL from environment variable
+	const cacheTtl = parseInt(PUBLIC_CACHE_TTL || '', 10) || 60 * 60 * 1000;
+
 	let db: AsyncDuckDB | null = $state(null);
+	let cacheService: ParquetCacheService | null = $state(null);
+	let cacheStatus: CacheStatus = $state({ ...INITIAL_CACHE_STATUS });
 	let dataState: DataState = $state({
 		loading: true,
 		error: null,
@@ -22,7 +30,7 @@
 		lastRefresh: null
 	});
 
-	async function loadData() {
+	async function loadData(forceRefresh: boolean = false) {
 		dataState.loading = true;
 		dataState.error = null;
 
@@ -32,8 +40,19 @@
 				db = await initDuckDB();
 			}
 
-			// Load parquet data
-			await loadParquetFromUrl(db, PUBLIC_PARQUET_URL);
+			// Initialize cache service if not already done
+			if (!cacheService) {
+				cacheService = new ParquetCacheService({ ttl: cacheTtl });
+				await cacheService.init();
+			}
+
+			// Load parquet data with cache
+			const result = await loadParquetWithCache(db, PUBLIC_PARQUET_URL, cacheService, {
+				forceRefresh
+			});
+
+			// Update cache status from service
+			cacheStatus = cacheService.getStatus();
 
 			// Validate schema
 			const missingColumns = await validateSchema(db);
@@ -47,8 +66,13 @@
 			}
 
 			dataState.initialized = true;
-			dataState.lastRefresh = new Date();
+			dataState.lastRefresh = new Date(result.metadata.timestamp);
 		} catch (e) {
+			// Update cache status on error
+			if (cacheService) {
+				cacheStatus = cacheService.getStatus();
+			}
+
 			// Check if it's already a DataError
 			if (e && typeof e === 'object' && 'type' in e) {
 				dataState.error = e as DataError;
@@ -65,7 +89,11 @@
 	}
 
 	async function refresh() {
-		await loadData();
+		await loadData(false);
+	}
+
+	async function forceRefresh() {
+		await loadData(true);
 	}
 
 	// Set context for child components
@@ -76,7 +104,11 @@
 		get state() {
 			return dataState;
 		},
-		refresh
+		get cacheStatus() {
+			return cacheStatus;
+		},
+		refresh,
+		forceRefresh
 	});
 
 	onMount(() => {

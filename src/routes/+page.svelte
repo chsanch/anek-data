@@ -9,6 +9,7 @@
 	import ExportModal from '$lib/components/ExportModal.svelte';
 	import ReferenceSearch from '$lib/components/ReferenceSearch.svelte';
 	import TableToolbar from '$lib/components/TableToolbar.svelte';
+	import CacheIndicator from '$lib/components/CacheIndicator.svelte';
 	import type { ExportOptions } from '$lib/components/ExportModal.svelte';
 	import { formatCompact } from '$lib/utils/format';
 	import { QueryCache } from '$lib/utils/debounce';
@@ -288,10 +289,11 @@
 			</nav>
 		</div>
 		<div class="header-right">
-			<div class="sync-status">
-				<span class="sync-dot"></span>
-				<span class="sync-text">Live</span>
-			</div>
+			<CacheIndicator
+				status={dataContext.cacheStatus}
+				onRefresh={dataContext.forceRefresh}
+				refreshing={dataContext.state.loading}
+			/>
 			<time class="timestamp">{new Date().toLocaleString('en-GB', { hour12: false })}</time>
 			<ThemeToggle />
 		</div>
@@ -515,33 +517,6 @@
 		display: flex;
 		align-items: center;
 		gap: 20px;
-	}
-
-	.sync-status {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-	}
-
-	.sync-dot {
-		width: 6px;
-		height: 6px;
-		background: var(--accent-primary);
-		border-radius: 50%;
-		animation: pulse 2s ease-in-out infinite;
-	}
-
-	@keyframes pulse {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.4; }
-	}
-
-	.sync-text {
-		font-size: 12px;
-		font-weight: 500;
-		color: var(--accent-primary);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
 	}
 
 	.timestamp {

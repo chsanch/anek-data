@@ -54,14 +54,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Implement isCacheValid() in src/lib/db/cache.ts - check if cache entry exists and TTL not expired
-- [ ] T008 [US1] Implement getMetadata() in src/lib/db/cache.ts - return CacheMetadata without binary data
-- [ ] T009 [US1] Implement private storeCache() in src/lib/db/cache.ts - store ArrayBuffer with metadata to IndexedDB
-- [ ] T010 [US1] Implement loadData() basic flow in src/lib/db/cache.ts - check cache first, fetch from network if miss, store result
-- [ ] T011 [US1] Update loadParquetFromUrl() in src/lib/db/loader.ts to accept optional cache service parameter
-- [ ] T012 [US1] Integrate cache service into DataProvider.svelte - initialize cache on mount, use cache-aware loading
-- [ ] T013 [US1] Add graceful degradation in src/lib/db/cache.ts - catch IndexedDB errors, fall back to network-only mode
-- [ ] T014 [US1] Implement TTL configuration from PUBLIC_CACHE_TTL environment variable in src/lib/db/cache.ts
+- [x] T007 [US1] Implement isCacheValid() in src/lib/db/cache.ts - check if cache entry exists and TTL not expired
+- [x] T008 [US1] Implement getMetadata() in src/lib/db/cache.ts - return CacheMetadata without binary data
+- [x] T009 [US1] Implement private storeCache() in src/lib/db/cache.ts - store ArrayBuffer with metadata to IndexedDB
+- [x] T010 [US1] Implement loadData() basic flow in src/lib/db/cache.ts - check cache first, fetch from network if miss, store result
+- [x] T011 [US1] Update loadParquetFromUrl() in src/lib/db/loader.ts to accept optional cache service parameter
+- [x] T012 [US1] Integrate cache service into DataProvider.svelte - initialize cache on mount, use cache-aware loading
+- [x] T013 [US1] Add graceful degradation in src/lib/db/cache.ts - catch IndexedDB errors, fall back to network-only mode
+- [x] T014 [US1] Implement TTL configuration from PUBLIC_CACHE_TTL environment variable in src/lib/db/cache.ts
 
 **Checkpoint**: User Story 1 complete - returning users load from cache, first-time users cache data after download
 
@@ -75,13 +75,13 @@
 
 ### Implementation for User Story 2
 
-- [ ] T015 [US2] Implement getStatus() in src/lib/db/cache.ts - return current CacheStatus (state, timestamp, isStale, source)
-- [ ] T016 [US2] Add cacheStatus reactive state to DataProvider.svelte and expose via context
-- [ ] T017 [US2] Create CacheIndicator.svelte component in src/lib/components/ - display cache status with timestamp
-- [ ] T018 [US2] Implement timestamp formatting in CacheIndicator.svelte using $derived rune (e.g., "2:30 PM" format)
-- [ ] T019 [US2] Add loading state display in CacheIndicator.svelte when state is 'checking' or 'loading'
-- [ ] T020 [US2] Add stale data warning display in CacheIndicator.svelte when isStale is true
-- [ ] T021 [US2] Add CacheIndicator to src/routes/+page.svelte dashboard UI
+- [x] T015 [US2] Implement getStatus() in src/lib/db/cache.ts - return current CacheStatus (state, timestamp, isStale, source)
+- [x] T016 [US2] Add cacheStatus reactive state to DataProvider.svelte and expose via context
+- [x] T017 [US2] Create CacheIndicator.svelte component in src/lib/components/ - display cache status with timestamp
+- [x] T018 [US2] Implement timestamp formatting in CacheIndicator.svelte using $derived rune (e.g., "2:30 PM" format)
+- [x] T019 [US2] Add loading state display in CacheIndicator.svelte when state is 'checking' or 'loading'
+- [x] T020 [US2] Add stale data warning display in CacheIndicator.svelte when isStale is true
+- [x] T021 [US2] Add CacheIndicator to src/routes/+page.svelte dashboard UI
 
 **Checkpoint**: User Story 2 complete - users see cache status and data freshness at all times
 

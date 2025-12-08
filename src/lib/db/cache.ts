@@ -109,11 +109,109 @@ export class ParquetCacheService {
 	 * @throws Error if network fails and no usable cache exists
 	 */
 	async loadData(url: string, options?: { forceRefresh?: boolean }): Promise<LoadResult> {
-		this.status = { ...this.status, state: 'checking' };
+		const forceRefresh = options?.forceRefresh ?? false;
 
-		// TODO: T007-T010 - Implement full loadData logic
-		// For now, throw to indicate not implemented
-		throw new Error('loadData not yet implemented');
+		this.updateStatus({ state: 'checking' });
+
+		// Check cache first (unless force refresh)
+		if (!forceRefresh && this.db) {
+			try {
+				const entry = await this.db.get('parquet-cache', url);
+				if (entry) {
+					const now = Date.now();
+					const isValid = entry.expiresAt > now;
+
+					if (isValid) {
+						// Cache hit - return cached data
+						this.updateStatus({
+							state: 'ready',
+							timestamp: entry.timestamp,
+							isStale: false,
+							source: 'cache'
+						});
+
+						return {
+							data: entry.data,
+							fromCache: true,
+							metadata: {
+								url: entry.url,
+								timestamp: entry.timestamp,
+								expiresAt: entry.expiresAt,
+								fileSize: entry.fileSize,
+								etag: entry.etag
+							}
+						};
+					}
+				}
+			} catch (error) {
+				console.warn('Failed to read from cache:', error);
+				// Continue to network fetch
+			}
+		}
+
+		// Cache miss or force refresh - fetch from network
+		this.updateStatus({ state: 'loading' });
+
+		try {
+			const response = await fetch(url);
+
+			if (!response.ok) {
+				throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+			}
+
+			const data = await response.arrayBuffer();
+			const etag = response.headers.get('etag');
+
+			// Store in cache
+			const metadata = await this.storeCache(url, data, etag);
+
+			this.updateStatus({
+				state: 'ready',
+				timestamp: metadata.timestamp,
+				isStale: false,
+				source: 'network'
+			});
+
+			return {
+				data,
+				fromCache: false,
+				metadata
+			};
+		} catch (error) {
+			// Network failed - try to use stale cache as fallback
+			if (this.db) {
+				try {
+					const entry = await this.db.get('parquet-cache', url);
+					if (entry) {
+						console.warn('Network failed, using stale cache:', error);
+						this.updateStatus({
+							state: 'ready',
+							timestamp: entry.timestamp,
+							isStale: true,
+							source: 'cache'
+						});
+
+						return {
+							data: entry.data,
+							fromCache: true,
+							metadata: {
+								url: entry.url,
+								timestamp: entry.timestamp,
+								expiresAt: entry.expiresAt,
+								fileSize: entry.fileSize,
+								etag: entry.etag
+							}
+						};
+					}
+				} catch (cacheError) {
+					console.warn('Failed to read stale cache:', cacheError);
+				}
+			}
+
+			// No cache available - propagate error
+			this.updateStatus({ state: 'error' });
+			throw error;
+		}
 	}
 
 	/**
