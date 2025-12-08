@@ -140,6 +140,14 @@
 							class:sortable={header.column.getCanSort()}
 							class:align-right={header.id === 'rate'}
 							onclick={header.column.getToggleSortingHandler()}
+							onkeydown={(e) => {
+								if ((e.key === 'Enter' || e.key === ' ') && header.column.getCanSort()) {
+									e.preventDefault();
+									header.column.getToggleSortingHandler()?.(e);
+								}
+							}}
+							tabindex={header.column.getCanSort() ? 0 : undefined}
+							role={header.column.getCanSort() ? 'button' : undefined}
 							aria-sort={header.column.getIsSorted()
 								? header.column.getIsSorted() === 'desc'
 									? 'descending'
@@ -326,9 +334,19 @@
 		user-select: none;
 	}
 
-	.orders-table th.sortable:hover {
+	.orders-table th.sortable:hover,
+	.orders-table th.sortable:focus {
 		background: var(--bg-elevated);
 		color: var(--text-primary);
+	}
+
+	.orders-table th.sortable:focus {
+		outline: 2px solid var(--accent-primary);
+		outline-offset: -2px;
+	}
+
+	.orders-table th.sortable:focus:not(:focus-visible) {
+		outline: none;
 	}
 
 	.header-content {
