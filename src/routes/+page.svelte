@@ -6,6 +6,8 @@
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 	import ErrorMessage from '$lib/components/ErrorMessage.svelte';
 	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
+	import ExportModal from '$lib/components/ExportModal.svelte';
+	import type { ExportOptions } from '$lib/components/ExportModal.svelte';
 	import { formatCompact } from '$lib/utils/format';
 	import { QueryCache } from '$lib/utils/debounce';
 	import { getDataContext } from '$lib/db/context';
@@ -14,6 +16,9 @@
 		getTotalOrderCount,
 		getDashboardStats,
 		getVolumeByCurrency,
+		exportOrdersToCsv,
+		downloadCsv,
+		getExportOrderCount,
 		type DashboardStats,
 		type VolumeByCurrency
 	} from '$lib/db/queries';
@@ -150,6 +155,40 @@
 		volumeByCurrency.length > 0 ? Math.max(...volumeByCurrency.map((v) => v.volume)) : 1
 	);
 
+	// Export modal state
+	let showExportModal = $state(false);
+	let exporting = $state(false);
+
+	async function handleExport(options: ExportOptions) {
+		if (!dataContext.db) return;
+
+		exporting = true;
+		try {
+			const { csv, rowCount } = await exportOrdersToCsv(dataContext.db, options);
+
+			// Generate filename with timestamp
+			const timestamp = new Date().toISOString().split('T')[0];
+			let filename = `orders-export-${timestamp}`;
+			if (options.type === 'date-range') {
+				filename = `orders-${options.startDate}-to-${options.endDate}`;
+			}
+			filename += '.csv';
+
+			downloadCsv(csv, filename);
+			showExportModal = false;
+
+			console.log(`Exported ${rowCount} orders to ${filename}`);
+		} catch (e) {
+			console.error('Failed to export orders:', e);
+		} finally {
+			exporting = false;
+		}
+	}
+
+	async function handleGetExportCount(options: ExportOptions): Promise<number> {
+		if (!dataContext.db) return 0;
+		return getExportOrderCount(dataContext.db, options);
+	}
 </script>
 
 <svelte:head>
@@ -262,7 +301,7 @@
 						</svg>
 						Filter
 					</button>
-					<button class="btn-export">Export</button>
+					<button class="btn-export" onclick={() => showExportModal = true}>Export</button>
 				</div>
 			</div>
 			{#if dataContext.state.loading && !dataContext.state.initialized}
@@ -286,6 +325,16 @@
 		</section>
 	</main>
 </div>
+
+<!-- Export Modal -->
+<ExportModal
+	open={showExportModal}
+	onclose={() => showExportModal = false}
+	onexport={handleExport}
+	ongetcount={handleGetExportCount}
+	totalOrders={totalOrders}
+	{exporting}
+/>
 
 <style>
 	.dashboard {

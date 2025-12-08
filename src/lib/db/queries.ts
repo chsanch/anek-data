@@ -2,6 +2,15 @@ import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
 import type { UnifiedOrder } from '$lib/types/orders';
 
 /**
+ * Export options for CSV download
+ */
+export interface ExportOptions {
+	type: 'all' | 'date-range';
+	startDate?: string;
+	endDate?: string;
+}
+
+/**
  * Dashboard statistics calculated from orders data
  */
 export interface DashboardStats {
@@ -219,4 +228,149 @@ export async function getVolumeByCurrency(
 	} finally {
 		await conn.close();
 	}
+}
+
+/**
+ * Get the count of orders that would be exported based on options
+ * Used to preview export size before downloading
+ */
+export async function getExportOrderCount(
+	db: AsyncDuckDB,
+	options: ExportOptions
+): Promise<number> {
+	const conn = await db.connect();
+	try {
+		let whereClause = '';
+		if (options.type === 'date-range' && options.startDate && options.endDate) {
+			whereClause = `WHERE creation_date >= DATE '${options.startDate}' AND creation_date <= DATE '${options.endDate}'`;
+		}
+
+		const result = await conn.query(`
+			SELECT COUNT(*)::BIGINT as count FROM orders ${whereClause}
+		`);
+		return toSafeNumber(result.toArray()[0].count);
+	} finally {
+		await conn.close();
+	}
+}
+
+/**
+ * Export orders to CSV format
+ * Returns the CSV content as a string
+ */
+export async function exportOrdersToCsv(
+	db: AsyncDuckDB,
+	options: ExportOptions
+): Promise<{ csv: string; rowCount: number }> {
+	const conn = await db.connect();
+	try {
+		// Build the WHERE clause based on options
+		// creation_date is stored as DATE type in the parquet file
+		let whereClause = '';
+		if (options.type === 'date-range' && options.startDate && options.endDate) {
+			// Compare dates directly using DATE literals
+			whereClause = `WHERE creation_date >= DATE '${options.startDate}' AND creation_date <= DATE '${options.endDate}'`;
+		}
+
+		// First get the count
+		const countResult = await conn.query(`
+			SELECT COUNT(*)::BIGINT as count FROM orders ${whereClause}
+		`);
+		const rowCount = toSafeNumber(countResult.toArray()[0].count);
+
+		// Query data - dates are timestamps, format them in JavaScript
+		const result = await conn.query(`
+			SELECT
+				id,
+				reference,
+				fx_order_type,
+				market_direction,
+				buy_amount_cents,
+				sell_amount_cents,
+				buy_currency,
+				sell_currency,
+				rate,
+				value_date,
+				creation_date,
+				execution_date,
+				status,
+				liquidity_provider
+			FROM orders
+			${whereClause}
+			ORDER BY creation_date DESC, id DESC
+		`);
+
+		const rows = result.toArray();
+
+		// Build CSV
+		const headers = [
+			'id',
+			'reference',
+			'fx_order_type',
+			'market_direction',
+			'buy_amount_cents',
+			'sell_amount_cents',
+			'buy_currency',
+			'sell_currency',
+			'rate',
+			'value_date',
+			'creation_date',
+			'execution_date',
+			'status',
+			'liquidity_provider'
+		];
+
+		// Date fields that need formatting
+		const dateFields = ['value_date', 'creation_date', 'execution_date'];
+
+		const csvLines = [headers.join(',')];
+
+		for (const row of rows) {
+			const values = headers.map((header) => {
+				let value = row[header];
+
+				if (value === null || value === undefined) {
+					return '';
+				}
+
+				// Format date fields from timestamps
+				if (dateFields.includes(header) && typeof value === 'number') {
+					const date = new Date(value);
+					if (!isNaN(date.getTime())) {
+						value = date.toISOString().split('T')[0];
+					}
+				}
+
+				// Escape quotes and wrap in quotes if contains comma or quote
+				const strValue = String(value);
+				if (strValue.includes(',') || strValue.includes('"') || strValue.includes('\n')) {
+					return `"${strValue.replace(/"/g, '""')}"`;
+				}
+				return strValue;
+			});
+			csvLines.push(values.join(','));
+		}
+
+		return {
+			csv: csvLines.join('\n'),
+			rowCount
+		};
+	} finally {
+		await conn.close();
+	}
+}
+
+/**
+ * Trigger a CSV file download in the browser
+ */
+export function downloadCsv(content: string, filename: string): void {
+	const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement('a');
+	link.href = url;
+	link.download = filename;
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
+	URL.revokeObjectURL(url);
 }
