@@ -18,6 +18,7 @@
 - **TypeScript 5.x** in strict mode
 - **Tailwind CSS 4** for styling
 - **DuckDB WASM** for in-browser SQL analytics
+- **idb** for IndexedDB cache (parquet file persistence)
 - **Vitest** for testing
 
 ## Svelte MCP Server
@@ -97,6 +98,7 @@ src/
 - Access via `$env/static/public` or `$env/dynamic/public`
 - Current env vars:
   - `PUBLIC_PARQUET_URL`: URL to remote parquet file
+  - `PUBLIC_CACHE_TTL`: Cache time-to-live in milliseconds (default: 3600000 = 1 hour)
 
 ## Testing Local Parquet Server
 
@@ -108,13 +110,30 @@ cd /path/to/parquet/files && python3 -m http.server 8888
 
 Then set `PUBLIC_PARQUET_URL=http://localhost:8888/orders.parquet` in `.env`
 
-## Active Technologies
+## Caching Architecture
 
-- TypeScript 5.x (strict mode) + Svelte 5, SvelteKit, @tanstack/svelte-table, DuckDB WASM (002-enhanced-orders-table)
-- DuckDB WASM (in-browser), IndexedDB (persistence) (002-enhanced-orders-table)
-- TypeScript 5.x (strict mode) + SvelteKit, Svelte 5, @duckdb/duckdb-wasm, idb (IndexedDB wrapper) (003-parquet-cache)
-- IndexedDB (browser persistence for parquet buffers) (003-parquet-cache)
+The application uses IndexedDB to cache parquet files for faster page loads:
+
+- **Cache Service**: `src/lib/db/cache.ts` - `ParquetCacheService` class handles all caching logic
+- **Cache Types**: `src/lib/db/cache-types.ts` - TypeScript interfaces for cache entities
+- **Cache Indicator**: `src/lib/components/CacheIndicator.svelte` - UI component showing cache status
+
+### Cache Features
+
+- Time-based expiration (configurable via `PUBLIC_CACHE_TTL`)
+- ETag-based validation (sends `If-None-Match` header, handles 304 responses)
+- Graceful degradation (falls back to network if IndexedDB unavailable)
+- Offline support (uses stale cache with warning when network fails)
+- Corruption detection (validates cache entries, auto-deletes invalid data)
+
+### Cache States
+
+- `idle`: Initial state
+- `checking`: Validating cache
+- `loading`: Fetching from network
+- `ready`: Data loaded (from cache or network)
+- `error`: Failed to load
 
 ## Recent Changes
 
-- 002-enhanced-orders-table: Added TypeScript 5.x (strict mode) + Svelte 5, SvelteKit, @tanstack/svelte-table, DuckDB WASM
+- 003-parquet-cache: Added browser data persistence with IndexedDB caching, ETag validation, cache status UI indicator
