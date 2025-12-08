@@ -24,6 +24,7 @@
 		onSortChange?: (sort: SortConfig | undefined) => void;
 		currentSort?: SortConfig;
 		searchTerm?: string;
+		hasFilters?: boolean;
 	}
 
 	let {
@@ -36,7 +37,8 @@
 		onPageSizeChange,
 		onSortChange,
 		currentSort,
-		searchTerm = ''
+		searchTerm = '',
+		hasFilters = false
 	}: Props = $props();
 
 	// Convert currentSort prop to TanStack SortingState format
@@ -187,10 +189,16 @@
 								message={`No orders found with reference containing "${searchTerm}". Try a different search term.`}
 								icon="search"
 							/>
+						{:else if hasFilters}
+							<EmptyState
+								title="No orders match your filters"
+								message="No orders found matching the selected filters. Try adjusting or clearing your filters."
+								icon="search"
+							/>
 						{:else}
 							<EmptyState
 								title="No orders found"
-								message="There are no orders matching your criteria."
+								message="There are no orders to display."
 								icon="search"
 							/>
 						{/if}

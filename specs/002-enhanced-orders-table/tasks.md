@@ -110,24 +110,26 @@
 
 ---
 
-## Phase 6: User Story 4 - Column-Specific Filters (Priority: P4)
+## Phase 6: User Story 4 - Column-Specific Filters (Priority: P4) ✅ COMPLETE
 
 **Goal**: Users can filter by status, type, currency using dropdown filters
 
 **Independent Test**: Select "open" from status filter → only open orders shown. Add "forward" filter → only open forwards shown.
 
+**Implementation Note**: Filters are SQL-based using exact match queries (`WHERE column = 'value'`). Filter options are dynamically loaded from the database via `getFilterOptions()`. The Filter button toggles a collapsible `TableToolbar` component.
+
 ### Implementation for User Story 4
 
-- [ ] T025 [US4] Add columnFilters state and onColumnFiltersChange callback in src/lib/components/OrdersTable.svelte
-- [ ] T026 [US4] Create FilterDropdown component at src/lib/components/FilterDropdown.svelte with select element and "All" option
-- [ ] T027 [US4] Add extractFilterOptions function to compute unique values from orders in src/lib/components/OrdersTable.svelte
-- [ ] T028 [US4] Add filter dropdowns to TableToolbar for status, fxOrderType, buyCurrency, sellCurrency, liquidityProvider in src/lib/components/TableToolbar.svelte
-- [ ] T029 [US4] Wire filter dropdowns to columnFilters state via setFilterValue in src/lib/components/TableToolbar.svelte
-- [ ] T030 [US4] Add active filter count badge to TableToolbar in src/lib/components/TableToolbar.svelte
-- [ ] T031 [US4] Add "Clear all filters" button that resets globalFilter and columnFilters in src/lib/components/TableToolbar.svelte
-- [ ] T032 [US4] Update empty state to show "No orders match your filters" with clear button in src/lib/components/OrdersTable.svelte
+- [x] T025 [US4] Add ColumnFilters interface, columnFilters state, and buildWhereConditions helper in src/lib/db/queries.ts
+- [x] T026 [US4] Create FilterDropdown component at src/lib/components/FilterDropdown.svelte with select element and "All" option
+- [x] T027 [US4] Add getFilterOptions function to query unique values for all filterable columns in src/lib/db/queries.ts
+- [x] T028 [US4] Create TableToolbar component at src/lib/components/TableToolbar.svelte with filter dropdowns for status, fxOrderType, buyCurrency, sellCurrency, liquidityProvider
+- [x] T029 [US4] Wire filter dropdowns to columnFilters state in +page.svelte with handleColumnFiltersChange callback
+- [x] T030 [US4] Add active filter count badge to Filter button in +page.svelte header
+- [x] T031 [US4] Add "Clear all filters" button in TableToolbar.svelte that resets columnFilters
+- [x] T032 [US4] Update empty state in OrdersTable.svelte to show "No orders match your filters" when hasFilters is true
 
-**Checkpoint**: Column filters functional, combinable with search, clearable
+**Checkpoint**: Column filters functional, combinable with search, clearable ✅
 
 ---
 

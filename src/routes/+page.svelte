@@ -8,6 +8,7 @@
 	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import ExportModal from '$lib/components/ExportModal.svelte';
 	import ReferenceSearch from '$lib/components/ReferenceSearch.svelte';
+	import TableToolbar from '$lib/components/TableToolbar.svelte';
 	import type { ExportOptions } from '$lib/components/ExportModal.svelte';
 	import { formatCompact } from '$lib/utils/format';
 	import { QueryCache } from '$lib/utils/debounce';
@@ -17,12 +18,15 @@
 		getTotalOrderCount,
 		getDashboardStats,
 		getVolumeByCurrency,
+		getFilterOptions,
 		exportOrdersToCsv,
 		downloadCsv,
 		getExportOrderCount,
 		type DashboardStats,
 		type VolumeByCurrency,
-		type SortConfig
+		type SortConfig,
+		type ColumnFilters,
+		type FilterOptions
 	} from '$lib/db/queries';
 	import type { UnifiedOrder } from '$lib/types/orders';
 
@@ -42,6 +46,17 @@
 
 	// Reference search state
 	let referenceSearch = $state('');
+
+	// Column filters state
+	let columnFilters = $state<ColumnFilters>({});
+	let filterOptions = $state<FilterOptions>({
+		status: [],
+		fxOrderType: [],
+		buyCurrency: [],
+		sellCurrency: [],
+		liquidityProvider: []
+	});
+	let showFilters = $state(false);
 
 	// Orders state
 	let orders: UnifiedOrder[] = $state([]);
@@ -66,21 +81,22 @@
 	// Load data when initialized
 	$effect(() => {
 		if (dataContext.state.initialized && dataContext.db) {
-			loadOrders(currentPage, pageSize, currentSort, referenceSearch);
+			loadOrders(currentPage, pageSize, currentSort, referenceSearch, columnFilters);
 			loadStats();
 			loadVolumeByCurrency();
+			loadFilterOptions();
 		}
 	});
 
-	async function loadOrders(page: number, size: number, sort?: SortConfig, search?: string) {
+	async function loadOrders(page: number, size: number, sort?: SortConfig, search?: string, filters?: ColumnFilters) {
 		if (!dataContext.db) return;
 
 		ordersLoading = true;
 		try {
 			const offset = (page - 1) * size;
 			const [fetchedOrders, count] = await Promise.all([
-				getPaginatedOrders(dataContext.db, size, offset, sort, search),
-				getTotalOrderCount(dataContext.db, search)
+				getPaginatedOrders(dataContext.db, size, offset, sort, search, filters),
+				getTotalOrderCount(dataContext.db, search, filters)
 			]);
 			orders = fetchedOrders;
 			totalOrders = count;
@@ -91,27 +107,46 @@
 		}
 	}
 
+	async function loadFilterOptions() {
+		if (!dataContext.db) return;
+		try {
+			filterOptions = await getFilterOptions(dataContext.db);
+		} catch (e) {
+			console.error('Failed to load filter options:', e);
+		}
+	}
+
 	function handlePageChange(page: number) {
 		currentPage = page;
-		loadOrders(page, pageSize, currentSort, referenceSearch);
+		loadOrders(page, pageSize, currentSort, referenceSearch, columnFilters);
 	}
 
 	function handleSortChange(sort: SortConfig | undefined) {
 		currentSort = sort;
 		currentPage = 1; // Reset to first page when sorting changes
-		loadOrders(1, pageSize, sort, referenceSearch);
+		loadOrders(1, pageSize, sort, referenceSearch, columnFilters);
 	}
 
 	function handlePageSizeChange(size: number) {
 		pageSize = size;
 		currentPage = 1; // Reset to first page when page size changes
-		loadOrders(1, size, currentSort, referenceSearch);
+		loadOrders(1, size, currentSort, referenceSearch, columnFilters);
 	}
 
 	function handleReferenceSearchChange(search: string) {
 		referenceSearch = search;
 		currentPage = 1; // Reset to first page when search changes
-		loadOrders(1, pageSize, currentSort, search);
+		loadOrders(1, pageSize, currentSort, search, columnFilters);
+	}
+
+	function handleColumnFiltersChange(filters: ColumnFilters) {
+		columnFilters = filters;
+		currentPage = 1; // Reset to first page when filters change
+		loadOrders(1, pageSize, currentSort, referenceSearch, filters);
+	}
+
+	function toggleFilters() {
+		showFilters = !showFilters;
 	}
 
 	async function loadStats(useCache = true) {
@@ -172,15 +207,24 @@
 		await dataContext.refresh();
 		// Reset to first page on refresh and reload all data (bypassing cache)
 		currentPage = 1;
-		loadOrders(1, pageSize, currentSort, referenceSearch);
+		loadOrders(1, pageSize, currentSort, referenceSearch, columnFilters);
 		loadStats(false);
 		loadVolumeByCurrency(false);
+		loadFilterOptions();
 	}
 
 	// Calculate max volume for bar chart scaling
 	let maxVolume = $derived(
 		volumeByCurrency.length > 0 ? Math.max(...volumeByCurrency.map((v) => v.volume)) : 1
 	);
+
+	// Count active filters for badge
+	let activeFilterCount = $derived(
+		Object.values(columnFilters).filter((v) => v && v.trim()).length
+	);
+
+	// Check if any filters or search is active (for empty state message)
+	let hasActiveFilters = $derived(activeFilterCount > 0 || referenceSearch.trim().length > 0);
 
 	// Export modal state
 	let showExportModal = $state(false);
@@ -328,15 +372,25 @@
 						onclick={handleRefresh}
 						loading={dataContext.state.loading}
 					/>
-					<button class="btn-filter">
+					<button class="btn-filter" class:active={showFilters || activeFilterCount > 0} onclick={toggleFilters}>
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 							<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
 						</svg>
 						Filter
+						{#if activeFilterCount > 0}
+							<span class="filter-badge">{activeFilterCount}</span>
+						{/if}
 					</button>
 					<button class="btn-export" onclick={() => showExportModal = true}>Export</button>
 				</div>
 			</div>
+			{#if showFilters}
+				<TableToolbar
+					{filterOptions}
+					{columnFilters}
+					onFilterChange={handleColumnFiltersChange}
+				/>
+			{/if}
 			{#if dataContext.state.loading && !dataContext.state.initialized}
 				<div class="orders-loading">
 					<LoadingIndicator message="Loading orders from parquet file..." />
@@ -357,6 +411,7 @@
 					onSortChange={handleSortChange}
 					currentSort={currentSort}
 					searchTerm={referenceSearch}
+					hasFilters={hasActiveFilters}
 				/>
 			{/if}
 		</section>
@@ -667,6 +722,25 @@
 	.btn-export:hover {
 		border-color: var(--border-hover);
 		color: var(--text-primary);
+	}
+
+	.btn-filter.active {
+		border-color: var(--accent-primary);
+		color: var(--accent-primary);
+	}
+
+	.filter-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		font-size: 10px;
+		font-weight: 600;
+		color: var(--bg-primary);
+		background: var(--accent-primary);
+		border-radius: 9px;
 	}
 
 	.btn-export {

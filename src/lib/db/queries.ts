@@ -40,6 +40,18 @@ export interface SortConfig {
 }
 
 /**
+ * Column filters for orders query
+ * Keys are column names (camelCase), values are the filter values
+ */
+export interface ColumnFilters {
+	status?: string;
+	fxOrderType?: string;
+	buyCurrency?: string;
+	sellCurrency?: string;
+	liquidityProvider?: string;
+}
+
+/**
  * Map from camelCase column names to snake_case DB columns
  */
 const COLUMN_MAP: Record<string, string> = {
@@ -56,16 +68,46 @@ const COLUMN_MAP: Record<string, string> = {
 };
 
 /**
+ * Build WHERE clause conditions from reference search and column filters
+ */
+function buildWhereConditions(referenceSearch?: string, columnFilters?: ColumnFilters): string[] {
+	const conditions: string[] = [];
+
+	// Reference search (ILIKE for partial match)
+	if (referenceSearch && referenceSearch.trim()) {
+		const sanitized = referenceSearch.trim().replace(/'/g, "''");
+		conditions.push(`reference ILIKE '%${sanitized}%'`);
+	}
+
+	// Column filters (exact match)
+	if (columnFilters) {
+		for (const [column, value] of Object.entries(columnFilters)) {
+			if (value && value.trim()) {
+				const dbColumn = COLUMN_MAP[column];
+				if (dbColumn) {
+					const sanitized = value.trim().replace(/'/g, "''");
+					conditions.push(`${dbColumn} = '${sanitized}'`);
+				}
+			}
+		}
+	}
+
+	return conditions;
+}
+
+/**
  * Query paginated orders from the database
  * Supports custom sorting via sortConfig parameter
  * Supports reference search via referenceSearch parameter (SQL ILIKE)
+ * Supports column filters via columnFilters parameter (exact match)
  */
 export async function getPaginatedOrders(
 	db: AsyncDuckDB,
 	limit: number,
 	offset: number,
 	sortConfig?: SortConfig,
-	referenceSearch?: string
+	referenceSearch?: string,
+	columnFilters?: ColumnFilters
 ): Promise<UnifiedOrder[]> {
 	const conn = await db.connect();
 	try {
@@ -79,13 +121,9 @@ export async function getPaginatedOrders(
 			}
 		}
 
-		// Build WHERE clause for reference search
-		let whereClause = '';
-		if (referenceSearch && referenceSearch.trim()) {
-			// Escape single quotes in search term to prevent SQL injection
-			const sanitized = referenceSearch.trim().replace(/'/g, "''");
-			whereClause = `WHERE reference ILIKE '%${sanitized}%'`;
-		}
+		// Build WHERE clause from conditions
+		const conditions = buildWhereConditions(referenceSearch, columnFilters);
+		const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
 		const result = await conn.query(`
 			SELECT
@@ -117,21 +155,61 @@ export async function getPaginatedOrders(
 
 /**
  * Get total count of orders for pagination
- * Supports reference search filter to get accurate count for filtered results
+ * Supports reference search and column filters to get accurate count for filtered results
  */
-export async function getTotalOrderCount(db: AsyncDuckDB, referenceSearch?: string): Promise<number> {
+export async function getTotalOrderCount(
+	db: AsyncDuckDB,
+	referenceSearch?: string,
+	columnFilters?: ColumnFilters
+): Promise<number> {
 	const conn = await db.connect();
 	try {
-		// Build WHERE clause for reference search
-		let whereClause = '';
-		if (referenceSearch && referenceSearch.trim()) {
-			const sanitized = referenceSearch.trim().replace(/'/g, "''");
-			whereClause = `WHERE reference ILIKE '%${sanitized}%'`;
-		}
+		// Build WHERE clause from conditions
+		const conditions = buildWhereConditions(referenceSearch, columnFilters);
+		const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
 		const result = await conn.query(`SELECT COUNT(*) as total_count FROM orders ${whereClause}`);
 		const row = result.toArray()[0];
 		return Number(row.total_count);
+	} finally {
+		await conn.close();
+	}
+}
+
+/**
+ * Filter options available for each filterable column
+ */
+export interface FilterOptions {
+	status: string[];
+	fxOrderType: string[];
+	buyCurrency: string[];
+	sellCurrency: string[];
+	liquidityProvider: string[];
+}
+
+/**
+ * Get unique values for all filterable columns
+ * Used to populate filter dropdown options
+ */
+export async function getFilterOptions(db: AsyncDuckDB): Promise<FilterOptions> {
+	const conn = await db.connect();
+	try {
+		// Query all unique values in parallel-ish (single connection, multiple queries)
+		const [statusResult, typeResult, buyCurrResult, sellCurrResult, lpResult] = await Promise.all([
+			conn.query('SELECT DISTINCT status FROM orders ORDER BY status'),
+			conn.query('SELECT DISTINCT fx_order_type FROM orders ORDER BY fx_order_type'),
+			conn.query('SELECT DISTINCT buy_currency FROM orders ORDER BY buy_currency'),
+			conn.query('SELECT DISTINCT sell_currency FROM orders ORDER BY sell_currency'),
+			conn.query('SELECT DISTINCT liquidity_provider FROM orders ORDER BY liquidity_provider')
+		]);
+
+		return {
+			status: statusResult.toArray().map((r) => String(r.status)),
+			fxOrderType: typeResult.toArray().map((r) => String(r.fx_order_type)),
+			buyCurrency: buyCurrResult.toArray().map((r) => String(r.buy_currency)),
+			sellCurrency: sellCurrResult.toArray().map((r) => String(r.sell_currency)),
+			liquidityProvider: lpResult.toArray().map((r) => String(r.liquidity_provider))
+		};
 	} finally {
 		await conn.close();
 	}
