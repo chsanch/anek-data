@@ -11,6 +11,7 @@
 	import { ORDER_COLUMNS } from '$lib/types/table';
 	import Skeleton from './Skeleton.svelte';
 	import EmptyState from './EmptyState.svelte';
+	import PageSizeSelector from './PageSizeSelector.svelte';
 
 	interface Props {
 		orders: UnifiedOrder[];
@@ -19,6 +20,7 @@
 		pageSize?: number;
 		currentPage?: number;
 		onPageChange?: (page: number) => void;
+		onPageSizeChange?: (size: number) => void;
 		onSortChange?: (sort: SortConfig | undefined) => void;
 		currentSort?: SortConfig;
 	}
@@ -30,6 +32,7 @@
 		pageSize = 20,
 		currentPage = 1,
 		onPageChange,
+		onPageSizeChange,
 		onSortChange,
 		currentSort
 	}: Props = $props();
@@ -222,8 +225,13 @@
 </div>
 
 <div class="pagination">
-	<div class="pagination-info">
-		Showing {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, effectiveTotalCount)} of {effectiveTotalCount} orders
+	<div class="pagination-left">
+		{#if onPageSizeChange}
+			<PageSizeSelector value={pageSize} onChange={onPageSizeChange} />
+		{/if}
+		<div class="pagination-info">
+			Showing {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, effectiveTotalCount)} of {effectiveTotalCount.toLocaleString()} orders
+		</div>
 	</div>
 	<div class="pagination-controls">
 		<button
@@ -456,6 +464,12 @@
 		border-top: 1px solid var(--border-primary);
 		background: var(--bg-tertiary);
 		transition: background 0.3s ease, border-color 0.3s ease;
+	}
+
+	.pagination-left {
+		display: flex;
+		align-items: center;
+		gap: 16px;
 	}
 
 	.pagination-info {

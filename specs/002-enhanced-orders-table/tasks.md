@@ -68,7 +68,7 @@
 
 ---
 
-## Phase 4: User Story 2 - Page Size Control (Priority: P2)
+## Phase 4: User Story 2 - Page Size Control (Priority: P2) ✅ COMPLETE
 
 **Goal**: Users can select 10, 20, 50, or 100 rows per page
 
@@ -76,13 +76,13 @@
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Add pageSize state and onPaginationChange callback to table options in src/lib/components/OrdersTable.svelte
-- [ ] T015 [US2] Create PageSizeSelector component at src/lib/components/PageSizeSelector.svelte with dropdown for 10/20/50/100
-- [ ] T016 [US2] Integrate PageSizeSelector into pagination section of OrdersTable in src/lib/components/OrdersTable.svelte
-- [ ] T017 [US2] Ensure page resets to 0 when pageSize changes (add logic to onPaginationChange) in src/lib/components/OrdersTable.svelte
-- [ ] T018 [US2] Update pagination info text to use table.getPageCount() and table.getRowModel().rows.length in src/lib/components/OrdersTable.svelte
+- [x] T014 [US2] Add pageSize state and onPageSizeChange callback in src/routes/+page.svelte
+- [x] T015 [US2] Create PageSizeSelector component at src/lib/components/PageSizeSelector.svelte with dropdown for 10/20/50/100
+- [x] T016 [US2] Integrate PageSizeSelector into pagination section of OrdersTable in src/lib/components/OrdersTable.svelte
+- [x] T017 [US2] Ensure page resets to 1 when pageSize changes (handlePageSizeChange resets currentPage)
+- [x] T018 [US2] Update pagination info text with toLocaleString() for number formatting
 
-**Checkpoint**: Page size control functional, pagination info accurate
+**Checkpoint**: Page size control functional, pagination info accurate ✅
 
 ---
 

@@ -33,7 +33,7 @@
 	const dataContext = getDataContext();
 
 	// Pagination state
-	const PAGE_SIZE = 20;
+	let pageSize = $state(20);
 	let currentPage = $state(1);
 
 	// Sorting state
@@ -62,20 +62,20 @@
 	// Load data when initialized
 	$effect(() => {
 		if (dataContext.state.initialized && dataContext.db) {
-			loadOrders(currentPage);
+			loadOrders(currentPage, pageSize, currentSort);
 			loadStats();
 			loadVolumeByCurrency();
 		}
 	});
 
-	async function loadOrders(page: number, sort?: SortConfig) {
+	async function loadOrders(page: number, size: number, sort?: SortConfig) {
 		if (!dataContext.db) return;
 
 		ordersLoading = true;
 		try {
-			const offset = (page - 1) * PAGE_SIZE;
+			const offset = (page - 1) * size;
 			const [fetchedOrders, count] = await Promise.all([
-				getPaginatedOrders(dataContext.db, PAGE_SIZE, offset, sort),
+				getPaginatedOrders(dataContext.db, size, offset, sort),
 				getTotalOrderCount(dataContext.db)
 			]);
 			orders = fetchedOrders;
@@ -89,13 +89,19 @@
 
 	function handlePageChange(page: number) {
 		currentPage = page;
-		loadOrders(page, currentSort);
+		loadOrders(page, pageSize, currentSort);
 	}
 
 	function handleSortChange(sort: SortConfig | undefined) {
 		currentSort = sort;
 		currentPage = 1; // Reset to first page when sorting changes
-		loadOrders(1, sort);
+		loadOrders(1, pageSize, sort);
+	}
+
+	function handlePageSizeChange(size: number) {
+		pageSize = size;
+		currentPage = 1; // Reset to first page when page size changes
+		loadOrders(1, size, currentSort);
 	}
 
 	async function loadStats(useCache = true) {
@@ -156,7 +162,7 @@
 		await dataContext.refresh();
 		// Reset to first page on refresh and reload all data (bypassing cache)
 		currentPage = 1;
-		loadOrders(1);
+		loadOrders(1, pageSize, currentSort);
 		loadStats(false);
 		loadVolumeByCurrency(false);
 	}
@@ -328,9 +334,10 @@
 					orders={orders}
 					loading={ordersLoading}
 					totalCount={totalOrders}
-					pageSize={PAGE_SIZE}
+					pageSize={pageSize}
 					currentPage={currentPage}
 					onPageChange={handlePageChange}
+					onPageSizeChange={handlePageSizeChange}
 					onSortChange={handleSortChange}
 					currentSort={currentSort}
 				/>
