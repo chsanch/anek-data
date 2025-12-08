@@ -14,9 +14,20 @@ pnpm dev
 1. Copy `.env.example` to `.env`
 2. Configure `PUBLIC_PARQUET_URL` with your parquet file URL
 
-For local testing, serve a parquet file:
+### Local Development with Sample Data
+
+Generate and serve sample data (see [sample-data/README.md](sample-data/README.md)):
+
 ```bash
-python3 -m http.server 8888 --directory /path/to/parquet/files
+cd sample-data
+pip install pandas pyarrow
+python generate_sample_data.py
+python serve.py
+```
+
+Then set in `.env`:
+```bash
+PUBLIC_PARQUET_URL=http://localhost:8080/orders.parquet
 ```
 
 ## Scripts
