@@ -2,6 +2,18 @@ import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
 import type { UnifiedOrder } from '$lib/types/orders';
 
 /**
+ * Dashboard statistics calculated from orders data
+ */
+export interface DashboardStats {
+	totalTrades: number;
+	totalVolume: number;
+	activeCurrencies: number;
+	openOrders: number;
+	avgRate: number;
+	totalChains: number;
+}
+
+/**
  * Query paginated orders from the database
  * Orders are sorted by creation_date DESC, then id DESC
  */
@@ -84,4 +96,60 @@ function formatDate(value: unknown): string {
 		return value.toISOString().split('T')[0];
 	}
 	return String(value);
+}
+
+/**
+ * Safely convert BigInt or number to JavaScript number
+ * DuckDB returns BigInt for large aggregations which can overflow Number
+ */
+function toSafeNumber(value: unknown): number {
+	if (typeof value === 'bigint') {
+		// For very large BigInts, convert to string first then parse
+		return Number(value.toString());
+	}
+	return Number(value);
+}
+
+/**
+ * Get dashboard statistics from orders data
+ * Calculates: total trades, total volume, active currencies, open orders, avg rate, total chains
+ */
+export async function getDashboardStats(db: AsyncDuckDB): Promise<DashboardStats> {
+	const conn = await db.connect();
+	try {
+		// Cast large aggregations to DOUBLE to avoid BigInt overflow issues
+		const result = await conn.query(`
+			SELECT
+				COUNT(*)::BIGINT as total_trades,
+				(SUM(sell_amount_cents)::DOUBLE / 100.0) as total_volume,
+				COUNT(*) FILTER (WHERE status = 'open')::BIGINT as open_orders,
+				AVG(rate)::DOUBLE as avg_rate,
+				COUNT(*) FILTER (WHERE fx_order_type = 'chain')::BIGINT as total_chains
+			FROM orders
+		`);
+
+		const row = result.toArray()[0];
+
+		// Get unique currencies count
+		const currencyResult = await conn.query(`
+			SELECT COUNT(DISTINCT currency)::BIGINT as unique_currencies
+			FROM (
+				SELECT buy_currency as currency FROM orders
+				UNION
+				SELECT sell_currency as currency FROM orders
+			)
+		`);
+		const uniqueCurrencies = toSafeNumber(currencyResult.toArray()[0].unique_currencies);
+
+		return {
+			totalTrades: toSafeNumber(row.total_trades),
+			totalVolume: toSafeNumber(row.total_volume),
+			activeCurrencies: uniqueCurrencies,
+			openOrders: toSafeNumber(row.open_orders),
+			avgRate: toSafeNumber(row.avg_rate),
+			totalChains: toSafeNumber(row.total_chains)
+		};
+	} finally {
+		await conn.close();
+	}
 }

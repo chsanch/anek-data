@@ -7,7 +7,12 @@
 	import ErrorMessage from '$lib/components/ErrorMessage.svelte';
 	import { formatCompact } from '$lib/utils/format';
 	import { getDataContext } from '$lib/db/context';
-	import { getPaginatedOrders, getTotalOrderCount } from '$lib/db/queries';
+	import {
+		getPaginatedOrders,
+		getTotalOrderCount,
+		getDashboardStats,
+		type DashboardStats
+	} from '$lib/db/queries';
 	import type { UnifiedOrder } from '$lib/types/orders';
 
 	// Get data context from DataProvider
@@ -22,10 +27,22 @@
 	let totalOrders = $state(0);
 	let ordersLoading = $state(false);
 
-	// Load orders when data is initialized
+	// Stats state
+	let stats: DashboardStats = $state({
+		totalTrades: 0,
+		totalVolume: 0,
+		activeCurrencies: 0,
+		openOrders: 0,
+		avgRate: 0,
+		totalChains: 0
+	});
+	let statsLoading = $state(false);
+
+	// Load data when initialized
 	$effect(() => {
 		if (dataContext.state.initialized && dataContext.db) {
 			loadOrders(currentPage);
+			loadStats();
 		}
 	});
 
@@ -53,21 +70,25 @@
 		loadOrders(page);
 	}
 
-	async function handleRefresh() {
-		await dataContext.refresh();
-		// Reset to first page on refresh
-		currentPage = 1;
+	async function loadStats() {
+		if (!dataContext.db) return;
+
+		statsLoading = true;
+		try {
+			stats = await getDashboardStats(dataContext.db);
+		} catch (e) {
+			console.error('Failed to load stats:', e);
+		} finally {
+			statsLoading = false;
+		}
 	}
 
-	// Mock data based on the data structure proposal (will be replaced with real stats in US2)
-	const stats = $state({
-		totalTrades: 18_432,
-		totalVolume: 2_847_392_150,
-		activeCurrencies: 12,
-		openOrders: 847,
-		avgRate: 1.0847,
-		totalChains: 1_203
-	});
+	async function handleRefresh() {
+		await dataContext.refresh();
+		// Reset to first page on refresh and reload stats
+		currentPage = 1;
+		loadStats();
+	}
 
 	const volumeByCurrency = $state([
 		{ currency: 'EUR', volume: 1_234_567_890, change: 12.4 },
