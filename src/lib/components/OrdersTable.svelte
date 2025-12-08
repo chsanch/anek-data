@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { UnifiedOrder } from '$lib/types/orders';
 	import { formatCurrency } from '$lib/utils/format';
+	import Skeleton from './Skeleton.svelte';
+	import EmptyState from './EmptyState.svelte';
 
 	interface Props {
 		orders: UnifiedOrder[];
@@ -102,16 +104,27 @@
 		</thead>
 		<tbody>
 			{#if loading}
-				<tr>
-					<td colspan="9" class="cell-loading">
-						<div class="loading-spinner"></div>
-						<span>Loading orders...</span>
-					</td>
-				</tr>
+				{#each Array(5) as _, i (i)}
+					<tr class="skeleton-row">
+						<td><Skeleton width="100px" height="14px" /></td>
+						<td><Skeleton width="60px" height="22px" /></td>
+						<td><Skeleton width="40px" height="14px" /></td>
+						<td><Skeleton width="90px" height="14px" /></td>
+						<td><Skeleton width="90px" height="14px" /></td>
+						<td><Skeleton width="70px" height="14px" /></td>
+						<td><Skeleton width="80px" height="14px" /></td>
+						<td><Skeleton width="70px" height="22px" /></td>
+						<td><Skeleton width="50px" height="14px" /></td>
+					</tr>
+				{/each}
 			{:else if displayOrders.length === 0}
 				<tr>
 					<td colspan="9" class="cell-empty">
-						No orders found
+						<EmptyState
+							title="No orders found"
+							message="There are no orders matching your criteria."
+							icon="search"
+						/>
 					</td>
 				</tr>
 			{:else}
@@ -404,7 +417,6 @@
 	}
 
 	/* Loading and Empty States */
-	.cell-loading,
 	.cell-empty {
 		text-align: center;
 		padding: 48px 16px !important;
@@ -412,25 +424,8 @@
 		font-size: 14px;
 	}
 
-	.cell-loading {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 12px;
-	}
-
-	.loading-spinner {
-		width: 24px;
-		height: 24px;
-		border: 2px solid var(--border-primary);
-		border-top-color: var(--accent-primary);
-		border-radius: 50%;
-		animation: spin 0.8s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
+	.skeleton-row td {
+		padding: 12px 16px;
+		border-bottom: 1px solid var(--border-primary);
 	}
 </style>

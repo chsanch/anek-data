@@ -5,7 +5,9 @@
 	import RefreshButton from '$lib/components/RefreshButton.svelte';
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 	import ErrorMessage from '$lib/components/ErrorMessage.svelte';
+	import ErrorBoundary from '$lib/components/ErrorBoundary.svelte';
 	import { formatCompact } from '$lib/utils/format';
+	import { debounce, QueryCache } from '$lib/utils/debounce';
 	import { getDataContext } from '$lib/db/context';
 	import {
 		getPaginatedOrders,
@@ -16,6 +18,10 @@
 		type VolumeByCurrency
 	} from '$lib/db/queries';
 	import type { UnifiedOrder } from '$lib/types/orders';
+
+	// Query cache for stats (30 second TTL)
+	const statsCache = new QueryCache<DashboardStats>(30000);
+	const volumeCache = new QueryCache<VolumeByCurrency[]>(30000);
 
 	// Get data context from DataProvider
 	const dataContext = getDataContext();
@@ -77,12 +83,24 @@
 		loadOrders(page);
 	}
 
-	async function loadStats() {
+	async function loadStats(useCache = true) {
 		if (!dataContext.db) return;
+
+		// Check cache first
+		const cacheKey = 'dashboard-stats';
+		if (useCache) {
+			const cached = statsCache.get(cacheKey);
+			if (cached) {
+				stats = cached;
+				return;
+			}
+		}
 
 		statsLoading = true;
 		try {
-			stats = await getDashboardStats(dataContext.db);
+			const fetchedStats = await getDashboardStats(dataContext.db);
+			stats = fetchedStats;
+			statsCache.set(cacheKey, fetchedStats);
 		} catch (e) {
 			console.error('Failed to load stats:', e);
 		} finally {
@@ -90,12 +108,24 @@
 		}
 	}
 
-	async function loadVolumeByCurrency() {
+	async function loadVolumeByCurrency(useCache = true) {
 		if (!dataContext.db) return;
+
+		// Check cache first
+		const cacheKey = 'volume-by-currency';
+		if (useCache) {
+			const cached = volumeCache.get(cacheKey);
+			if (cached) {
+				volumeByCurrency = cached;
+				return;
+			}
+		}
 
 		volumeLoading = true;
 		try {
-			volumeByCurrency = await getVolumeByCurrency(dataContext.db, 5);
+			const fetchedVolume = await getVolumeByCurrency(dataContext.db, 5);
+			volumeByCurrency = fetchedVolume;
+			volumeCache.set(cacheKey, fetchedVolume);
 		} catch (e) {
 			console.error('Failed to load volume by currency:', e);
 		} finally {
@@ -104,11 +134,15 @@
 	}
 
 	async function handleRefresh() {
+		// Invalidate caches on refresh
+		statsCache.invalidate();
+		volumeCache.invalidate();
+
 		await dataContext.refresh();
-		// Reset to first page on refresh and reload all data
+		// Reset to first page on refresh and reload all data (bypassing cache)
 		currentPage = 1;
-		loadStats();
-		loadVolumeByCurrency();
+		loadStats(false);
+		loadVolumeByCurrency(false);
 	}
 
 	// Calculate max volume for bar chart scaling
