@@ -43,6 +43,7 @@
 	},
 	"dependencies": {
 		"@duckdb/duckdb-wasm": "^1.30.0",
-		"@tanstack/table-core": "^8.21.3"
+		"@tanstack/table-core": "^8.21.3",
+		"idb": "^8.0.3"
 	}
 }

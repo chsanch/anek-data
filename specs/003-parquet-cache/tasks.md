@@ -26,8 +26,8 @@
 
 **Purpose**: Project initialization and dependency installation
 
-- [ ] T001 Install idb dependency: `pnpm add idb`
-- [ ] T002 [P] Add PUBLIC_CACHE_TTL to .env.example with default value 3600000
+- [x] T001 Install idb dependency: `pnpm add idb`
+- [x] T002 [P] Add PUBLIC_CACHE_TTL to .env.example with default value 3600000
 
 ---
 

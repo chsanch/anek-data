@@ -15,10 +15,12 @@
 		debounceMs = 300
 	}: Props = $props();
 
-	// Create debounced onChange handler
-	const debouncedOnChange = debounce((val: string) => {
-		onChange(val);
-	}, debounceMs);
+	// Create debounced onChange handler - recreate when debounceMs changes
+	let debouncedOnChange = $derived(
+		debounce((val: string) => {
+			onChange(val);
+		}, debounceMs)
+	);
 
 	function handleInput(event: Event) {
 		const target = event.target as HTMLInputElement;
