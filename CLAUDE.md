@@ -135,10 +135,12 @@ The application uses IndexedDB to cache parquet files for faster page loads:
 - `error`: Failed to load
 
 ## Recent Changes
+
 - 004-analytics-page: Added TypeScript 5.9 (strict mode) + SvelteKit 2.48, Svelte 5.43, Lightweight Charts (TradingView), DuckDB WASM 1.30, TanStack Table Core 8.21
 
 - 003-parquet-cache: Added browser data persistence with IndexedDB caching, ETag validation, cache status UI indicator
 
 ## Active Technologies
+
 - TypeScript 5.9 (strict mode) + SvelteKit 2.48, Svelte 5.43, Lightweight Charts (TradingView), DuckDB WASM 1.30, TanStack Table Core 8.21 (004-analytics-page)
 - DuckDB WASM (in-browser) + IndexedDB (cache via idb 8.0) (004-analytics-page)

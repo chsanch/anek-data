@@ -40,16 +40,17 @@ Represents aggregated trading volume for a single day.
 
 ```typescript
 interface DailyVolume {
-  /** Date in YYYY-MM-DD format (Lightweight Charts time format) */
-  time: string;
-  /** Total volume in currency units (cents / 100) */
-  value: number;
-  /** Number of trades on this day */
-  tradeCount: number;
+	/** Date in YYYY-MM-DD format (Lightweight Charts time format) */
+	time: string;
+	/** Total volume in currency units (cents / 100) */
+	value: number;
+	/** Number of trades on this day */
+	tradeCount: number;
 }
 ```
 
 **Source Query**:
+
 ```sql
 SELECT
   strftime(creation_date, '%Y-%m-%d') as time,
@@ -62,6 +63,7 @@ ORDER BY creation_date
 ```
 
 **Validation Rules**:
+
 - `time` must be valid ISO date string
 - `value` must be >= 0
 - `tradeCount` must be >= 1
@@ -74,16 +76,17 @@ Represents buy/sell volume breakdown for a single day.
 
 ```typescript
 interface DailyDirectionVolume {
-  /** Date in YYYY-MM-DD format */
-  time: string;
-  /** Total buy volume in currency units */
-  buyVolume: number;
-  /** Total sell volume in currency units */
-  sellVolume: number;
+	/** Date in YYYY-MM-DD format */
+	time: string;
+	/** Total buy volume in currency units */
+	buyVolume: number;
+	/** Total sell volume in currency units */
+	sellVolume: number;
 }
 ```
 
 **Source Query**:
+
 ```sql
 SELECT
   strftime(creation_date, '%Y-%m-%d') as time,
@@ -96,6 +99,7 @@ ORDER BY creation_date
 ```
 
 **Validation Rules**:
+
 - `time` must be valid ISO date string
 - `buyVolume` must be >= 0
 - `sellVolume` must be >= 0
@@ -108,16 +112,17 @@ Represents count and percentage of orders by status.
 
 ```typescript
 interface StatusDistribution {
-  /** Order status: 'open', 'closed_to_trading', 'completed' */
-  status: 'open' | 'closed_to_trading' | 'completed';
-  /** Number of orders with this status */
-  count: number;
-  /** Percentage of total orders (0-100) */
-  percentage: number;
+	/** Order status: 'open', 'closed_to_trading', 'completed' */
+	status: 'open' | 'closed_to_trading' | 'completed';
+	/** Number of orders with this status */
+	count: number;
+	/** Percentage of total orders (0-100) */
+	percentage: number;
 }
 ```
 
 **Source Query**:
+
 ```sql
 SELECT
   status,
@@ -129,6 +134,7 @@ ORDER BY count DESC
 ```
 
 **Validation Rules**:
+
 - `status` must be one of: 'open', 'closed_to_trading', 'completed'
 - `count` must be >= 0
 - `percentage` must be >= 0 and <= 100
@@ -144,10 +150,10 @@ Represents available time range options.
 type TimeRangePreset = '7d' | '30d' | '90d' | 'all';
 
 interface TimeRange {
-  /** Start date (inclusive) in YYYY-MM-DD format */
-  start: string;
-  /** End date (inclusive) in YYYY-MM-DD format */
-  end: string;
+	/** Start date (inclusive) in YYYY-MM-DD format */
+	start: string;
+	/** End date (inclusive) in YYYY-MM-DD format */
+	end: string;
 }
 ```
 
@@ -168,14 +174,14 @@ interface TimeRange {
 ```typescript
 // Lightweight Charts AreaSeries expects:
 interface AreaData {
-  time: string;  // YYYY-MM-DD format
-  value: number;
+	time: string; // YYYY-MM-DD format
+	value: number;
 }
 
 // Direct mapping from DailyVolume
-const areaData: AreaData[] = dailyVolumes.map(d => ({
-  time: d.time,
-  value: d.value
+const areaData: AreaData[] = dailyVolumes.map((d) => ({
+	time: d.time,
+	value: d.value
 }));
 ```
 
@@ -184,22 +190,22 @@ const areaData: AreaData[] = dailyVolumes.map(d => ({
 ```typescript
 // Lightweight Charts HistogramSeries expects:
 interface HistogramData {
-  time: string;
-  value: number;
-  color?: string;
+	time: string;
+	value: number;
+	color?: string;
 }
 
 // Two series needed for buy vs sell
-const buyData: HistogramData[] = directionVolumes.map(d => ({
-  time: d.time,
-  value: d.buyVolume,
-  color: '#26a69a'  // Green for buy
+const buyData: HistogramData[] = directionVolumes.map((d) => ({
+	time: d.time,
+	value: d.buyVolume,
+	color: '#26a69a' // Green for buy
 }));
 
-const sellData: HistogramData[] = directionVolumes.map(d => ({
-  time: d.time,
-  value: -d.sellVolume,  // Negative to show below axis
-  color: '#ef5350'  // Red for sell
+const sellData: HistogramData[] = directionVolumes.map((d) => ({
+	time: d.time,
+	value: -d.sellVolume, // Negative to show below axis
+	color: '#ef5350' // Red for sell
 }));
 ```
 

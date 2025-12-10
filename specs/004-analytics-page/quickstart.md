@@ -56,21 +56,21 @@ src/
 
 ```typescript
 export interface DailyVolume {
-  time: string;
-  value: number;
-  tradeCount: number;
+	time: string;
+	value: number;
+	tradeCount: number;
 }
 
 export interface DailyDirectionVolume {
-  time: string;
-  buyVolume: number;
-  sellVolume: number;
+	time: string;
+	buyVolume: number;
+	sellVolume: number;
 }
 
 export interface StatusDistribution {
-  status: 'open' | 'closed_to_trading' | 'completed';
-  count: number;
-  percentage: number;
+	status: 'open' | 'closed_to_trading' | 'completed';
+	count: number;
+	percentage: number;
 }
 
 export type TimeRangePreset = '7d' | '30d' | '90d' | 'all';
@@ -80,25 +80,23 @@ export type TimeRangePreset = '7d' | '30d' | '90d' | 'all';
 
 ```typescript
 export async function getDailyVolume(
-  db: AsyncDuckDB,
-  startDate: string,
-  endDate: string
+	db: AsyncDuckDB,
+	startDate: string,
+	endDate: string
 ): Promise<DailyVolume[]> {
-  // Implementation
+	// Implementation
 }
 
 export async function getDailyDirectionVolume(
-  db: AsyncDuckDB,
-  startDate: string,
-  endDate: string
+	db: AsyncDuckDB,
+	startDate: string,
+	endDate: string
 ): Promise<DailyDirectionVolume[]> {
-  // Implementation
+	// Implementation
 }
 
-export async function getStatusDistribution(
-  db: AsyncDuckDB
-): Promise<StatusDistribution[]> {
-  // Implementation
+export async function getStatusDistribution(db: AsyncDuckDB): Promise<StatusDistribution[]> {
+	// Implementation
 }
 ```
 
@@ -108,23 +106,25 @@ Each chart follows this pattern:
 
 ```svelte
 <script lang="ts">
-  import { createChart, AreaSeries } from 'lightweight-charts';
-  import type { DailyVolume } from '$lib/types/analytics';
+	import { createChart, AreaSeries } from 'lightweight-charts';
+	import type { DailyVolume } from '$lib/types/analytics';
 
-  let { data }: { data: DailyVolume[] } = $props();
+	let { data }: { data: DailyVolume[] } = $props();
 
-  let container: HTMLDivElement;
-  let chart: IChartApi | null = null;
+	let container: HTMLDivElement;
+	let chart: IChartApi | null = null;
 
-  $effect(() => {
-    if (container && data.length > 0) {
-      chart = createChart(container, { /* options */ });
-      const series = chart.addSeries(AreaSeries);
-      series.setData(data);
+	$effect(() => {
+		if (container && data.length > 0) {
+			chart = createChart(container, {
+				/* options */
+			});
+			const series = chart.addSeries(AreaSeries);
+			series.setData(data);
 
-      return () => chart?.remove();
-    }
-  });
+			return () => chart?.remove();
+		}
+	});
 </script>
 
 <div bind:this={container} class="chart-container"></div>
@@ -135,12 +135,12 @@ Each chart follows this pattern:
 ```svelte
 <!-- src/routes/analytics/+page.svelte -->
 <script lang="ts">
-  import VolumeChart from '$lib/components/charts/VolumeChart.svelte';
-  import DirectionChart from '$lib/components/charts/DirectionChart.svelte';
-  import StatusDistribution from '$lib/components/charts/StatusDistribution.svelte';
-  import TimeRangeSelector from '$lib/components/TimeRangeSelector.svelte';
-  import { getDataContext } from '$lib/db/context';
-  // ... implementation
+	import VolumeChart from '$lib/components/charts/VolumeChart.svelte';
+	import DirectionChart from '$lib/components/charts/DirectionChart.svelte';
+	import StatusDistribution from '$lib/components/charts/StatusDistribution.svelte';
+	import TimeRangeSelector from '$lib/components/TimeRangeSelector.svelte';
+	import { getDataContext } from '$lib/db/context';
+	// ... implementation
 </script>
 ```
 
@@ -184,15 +184,18 @@ pnpm test:unit
 ## Common Issues
 
 ### Chart not rendering
+
 - Ensure container div has explicit height
 - Check that data array is not empty
 - Verify Lightweight Charts is imported correctly
 
 ### TypeScript errors
+
 - Run `pnpm check` to identify issues
 - Ensure `lightweight-charts` types are available
 
 ### Data not loading
+
 - Verify DataProvider context is accessible
 - Check DuckDB connection is established
 - Verify date range query parameters are valid

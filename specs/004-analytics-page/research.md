@@ -10,17 +10,20 @@
 **Decision**: Use `lightweight-charts` directly with Svelte 5 `$effect` for lifecycle management
 
 **Rationale**:
+
 - The existing `svelte-lightweight-charts` wrapper was built for Svelte 4 and may not be compatible with Svelte 5 runes syntax
 - Direct integration gives us full control and avoids wrapper compatibility issues
 - Lightweight Charts v5.0 is the latest (as of 2025), with improved tree-shaking and reduced bundle size
 - Constitution specifies Lightweight Charts for time-series, aligning with this choice
 
 **Alternatives Considered**:
+
 - `svelte-lightweight-charts` wrapper: Rejected due to Svelte 5 compatibility uncertainty
 - Chart.js: Rejected per constitution (not TradingView aesthetic, larger bundle)
 - ECharts: Rejected per constitution (larger bundle, overkill for this use case)
 
 **Implementation Pattern**:
+
 ```typescript
 // In Svelte 5 component
 import { createChart, AreaSeries, HistogramSeries } from 'lightweight-charts';
@@ -29,15 +32,16 @@ let chartContainer: HTMLDivElement;
 let chart: IChartApi;
 
 $effect(() => {
-  if (chartContainer) {
-    chart = createChart(chartContainer, options);
-    // Add series, set data
-    return () => chart.remove(); // cleanup
-  }
+	if (chartContainer) {
+		chart = createChart(chartContainer, options);
+		// Add series, set data
+		return () => chart.remove(); // cleanup
+	}
 });
 ```
 
 **Sources**:
+
 - [Lightweight Charts Documentation](https://tradingview.github.io/lightweight-charts/)
 - [GitHub: tradingview/lightweight-charts](https://github.com/tradingview/lightweight-charts)
 - [svelte-lightweight-charts wrapper](https://github.com/trash-and-fire/svelte-lightweight-charts)
@@ -49,19 +53,21 @@ $effect(() => {
 **Decision**: Use AreaSeries for volume trends, HistogramSeries for buy/sell comparison
 
 **Rationale**:
+
 - **AreaSeries**: Best for showing cumulative/aggregate data over time (daily volume)
 - **HistogramSeries**: Ideal for comparing positive/negative or dual values (buy vs sell)
 - Both are native Lightweight Charts types with excellent performance
 
 **Chart Mapping**:
 
-| Visualization | Lightweight Charts Type | Data Format |
-|---------------|------------------------|-------------|
-| Daily Volume Trend | AreaSeries | `{ time: string, value: number }[]` |
-| Buy vs Sell Balance | HistogramSeries (2 series) | `{ time: string, value: number, color: string }[]` |
-| Status Distribution | N/A (HTML/CSS) | `{ status: string, count: number, percentage: number }[]` |
+| Visualization       | Lightweight Charts Type    | Data Format                                               |
+| ------------------- | -------------------------- | --------------------------------------------------------- |
+| Daily Volume Trend  | AreaSeries                 | `{ time: string, value: number }[]`                       |
+| Buy vs Sell Balance | HistogramSeries (2 series) | `{ time: string, value: number, color: string }[]`        |
+| Status Distribution | N/A (HTML/CSS)             | `{ status: string, count: number, percentage: number }[]` |
 
 **Alternatives Considered**:
+
 - LineSeries for volume: Less visual impact than area
 - BarSeries: Requires more configuration than histogram
 - Stacked charts: Not natively supported in Lightweight Charts
@@ -73,11 +79,13 @@ $effect(() => {
 **Decision**: Extend existing `queries.ts` with dedicated analytics query functions
 
 **Rationale**:
+
 - Consistent with existing codebase patterns
 - Queries already handle BigInt conversion, date formatting
 - Reuse existing connection management
 
 **Query Functions to Add**:
+
 ```sql
 -- Daily Volume (for area chart)
 SELECT
@@ -116,17 +124,20 @@ ORDER BY count DESC
 **Decision**: Simple preset selector with custom date range option
 
 **Rationale**:
+
 - MVP approach: offer common presets (7d, 30d, 90d, All)
 - Avoids complexity of full date picker for initial implementation
 - Can extend to custom range picker in future iteration
 
 **Presets**:
+
 - Last 7 days
 - Last 30 days (default)
 - Last 90 days
 - All time
 
 **Alternatives Considered**:
+
 - Full date picker: More complex, not needed for MVP
 - Month/quarter selectors: Less flexible than day-based presets
 
@@ -137,11 +148,13 @@ ORDER BY count DESC
 **Decision**: Use runes ($state, $derived, $effect) for all new components
 
 **Rationale**:
+
 - Constitution requires Svelte 5 runes for reactive state
 - Existing codebase already uses this pattern
 - Better TypeScript inference than stores
 
 **Component State Pattern**:
+
 ```typescript
 // Chart component
 let data = $state<ChartDataPoint[]>([]);
@@ -152,7 +165,7 @@ let error = $state<string | null>(null);
 let dateRange = $derived(calculateDateRange(selectedPreset));
 
 $effect(() => {
-  loadData(dateRange.start, dateRange.end);
+	loadData(dateRange.start, dateRange.end);
 });
 ```
 
@@ -161,6 +174,7 @@ $effect(() => {
 ## Resolved Clarifications
 
 All technical context items resolved:
+
 - ✅ Chart library: Lightweight Charts v5.0 (direct integration)
 - ✅ Chart types: AreaSeries, HistogramSeries
 - ✅ Query patterns: Extend existing queries.ts

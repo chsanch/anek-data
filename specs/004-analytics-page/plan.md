@@ -23,15 +23,16 @@ Add a dedicated analytics page with three visualizations: daily volume trends (a
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| I. Local-First Architecture | ✅ PASS | All analytics queries run in DuckDB WASM browser-side |
-| II. Data Integrity & Sync | ✅ PASS | Uses existing DataProvider, amounts in cents |
-| III. Performance-First Design | ✅ PASS | Targets align (3s load, 50ms queries) |
-| IV. Component Independence | ✅ PASS | Each chart component manages own data/loading/error states |
+| Principle                      | Status  | Notes                                                                |
+| ------------------------------ | ------- | -------------------------------------------------------------------- |
+| I. Local-First Architecture    | ✅ PASS | All analytics queries run in DuckDB WASM browser-side                |
+| II. Data Integrity & Sync      | ✅ PASS | Uses existing DataProvider, amounts in cents                         |
+| III. Performance-First Design  | ✅ PASS | Targets align (3s load, 50ms queries)                                |
+| IV. Component Independence     | ✅ PASS | Each chart component manages own data/loading/error states           |
 | V. Simplicity Over Flexibility | ✅ PASS | Lightweight Charts for time-series, HTML/CSS for status distribution |
 
 **Technology Stack Compliance**:
+
 - ✅ Lightweight Charts specified in constitution for time-series
 - ✅ No additional charting libraries needed (status uses HTML/CSS)
 - ✅ Direct DuckDB SQL for queries
@@ -85,5 +86,5 @@ src/
 > No violations. Constitution fully aligned with implementation approach.
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|--------------------------------------|
-| N/A | - | - |
+| --------- | ---------- | ------------------------------------ |
+| N/A       | -          | -                                    |
