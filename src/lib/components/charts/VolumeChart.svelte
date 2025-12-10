@@ -37,6 +37,24 @@
 		areaBottomColor: isDark ? 'rgba(0, 212, 170, 0.0)' : 'rgba(5, 150, 105, 0.0)'
 	});
 
+	// Format large numbers with K, M, B suffixes
+	function formatCompactPrice(price: number): string {
+		const absPrice = Math.abs(price);
+		if (absPrice >= 1_000_000_000_000) {
+			return (price / 1_000_000_000_000).toFixed(1) + 'T';
+		}
+		if (absPrice >= 1_000_000_000) {
+			return (price / 1_000_000_000).toFixed(1) + 'B';
+		}
+		if (absPrice >= 1_000_000) {
+			return (price / 1_000_000).toFixed(1) + 'M';
+		}
+		if (absPrice >= 1_000) {
+			return (price / 1_000).toFixed(1) + 'K';
+		}
+		return price.toFixed(2);
+	}
+
 	// Initialize chart when container is available
 	$effect(() => {
 		if (!chartContainer) return;
@@ -71,6 +89,9 @@
 				horzLine: {
 					labelBackgroundColor: colors.lineColor
 				}
+			},
+			localization: {
+				priceFormatter: formatCompactPrice
 			}
 		});
 
@@ -78,7 +99,11 @@
 			lineColor: colors.lineColor,
 			topColor: colors.areaTopColor,
 			bottomColor: colors.areaBottomColor,
-			lineWidth: 2
+			lineWidth: 2,
+			priceFormat: {
+				type: 'custom',
+				formatter: formatCompactPrice
+			}
 		});
 
 		// Signal that chart is ready for theme updates
@@ -173,11 +198,7 @@
 		</div>
 	{:else}
 		<!-- Always render container so chart can initialize -->
-		<div
-			class="chart-container"
-			class:hidden={data.length === 0}
-			bind:this={chartContainer}
-		></div>
+		<div class="chart-container" class:hidden={data.length === 0} bind:this={chartContainer}></div>
 		{#if data.length === 0}
 			<div class="chart-placeholder">
 				<span>No data available for the selected time range</span>

@@ -131,15 +131,15 @@
 
 **Purpose**: Final integration, performance, and quality improvements
 
-- [ ] T037 Verify all charts render within 3 second performance target
-- [ ] T038 [P] Add compact number formatting (K, M, B) to chart axis labels
-- [ ] T039 [P] Ensure consistent styling with existing dashboard typography
-- [ ] T040 Test dark/light theme toggle on all chart components
-- [ ] T041 Test empty state scenarios (no data in selected range)
-- [ ] T042 Test error state scenarios (query failures)
-- [ ] T043 Run `pnpm check` to verify TypeScript compilation
-- [ ] T044 Run `pnpm lint` to verify code quality
-- [ ] T045 Validate against quickstart.md verification checklist
+- [x] T037 Verify all charts render within 3 second performance target
+- [x] T038 [P] Add compact number formatting (K, M, B) to chart axis labels
+- [x] T039 [P] Ensure consistent styling with existing dashboard typography
+- [x] T040 Test dark/light theme toggle on all chart components
+- [x] T041 Test empty state scenarios (no data in selected range)
+- [x] T042 Test error state scenarios (query failures)
+- [x] T043 Run `pnpm check` to verify TypeScript compilation
+- [x] T044 Run `pnpm lint` to verify code quality
+- [x] T045 Validate against quickstart.md verification checklist
 
 ---
 

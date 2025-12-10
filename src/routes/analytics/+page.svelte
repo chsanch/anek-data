@@ -20,6 +20,7 @@
 		TimeRangePreset
 	} from '$lib/types/analytics';
 	import { DEFAULT_TIME_RANGE, TIME_RANGE_OPTIONS } from '$lib/types/analytics';
+	import { resolve } from '$app/paths';
 
 	const dataContext = getDataContext();
 
@@ -126,7 +127,7 @@
 <div class="analytics-page">
 	<header class="page-header">
 		<div class="header-left">
-			<a href="/" class="back-link">
+			<a href={resolve('/')} class="back-link">
 				<svg
 					width="20"
 					height="20"

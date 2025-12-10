@@ -40,6 +40,24 @@
 		gridColor: isDark ? '#1e2028' : '#e5e7eb'
 	});
 
+	// Format large numbers with K, M, B suffixes
+	function formatCompactPrice(price: number): string {
+		const absPrice = Math.abs(price);
+		if (absPrice >= 1_000_000_000_000) {
+			return (price / 1_000_000_000_000).toFixed(1) + 'T';
+		}
+		if (absPrice >= 1_000_000_000) {
+			return (price / 1_000_000_000).toFixed(1) + 'B';
+		}
+		if (absPrice >= 1_000_000) {
+			return (price / 1_000_000).toFixed(1) + 'M';
+		}
+		if (absPrice >= 1_000) {
+			return (price / 1_000).toFixed(1) + 'K';
+		}
+		return price.toFixed(2);
+	}
+
 	// Initialize chart when container is available
 	$effect(() => {
 		if (!chartContainer) return;
@@ -66,6 +84,9 @@
 			timeScale: {
 				borderColor: colors.gridColor,
 				timeVisible: false
+			},
+			localization: {
+				priceFormatter: formatCompactPrice
 			}
 		});
 
@@ -73,7 +94,8 @@
 		buySeries = chart.addSeries(HistogramSeries, {
 			color: BUY_COLOR,
 			priceFormat: {
-				type: 'volume'
+				type: 'custom',
+				formatter: formatCompactPrice
 			},
 			priceScaleId: 'right'
 		});
@@ -81,7 +103,8 @@
 		sellSeries = chart.addSeries(HistogramSeries, {
 			color: SELL_COLOR,
 			priceFormat: {
-				type: 'volume'
+				type: 'custom',
+				formatter: formatCompactPrice
 			},
 			priceScaleId: 'right'
 		});
@@ -180,11 +203,7 @@
 			{/if}
 		</div>
 	{:else}
-		<div
-			class="chart-container"
-			class:hidden={data.length === 0}
-			bind:this={chartContainer}
-		></div>
+		<div class="chart-container" class:hidden={data.length === 0} bind:this={chartContainer}></div>
 		{#if data.length === 0}
 			<div class="chart-placeholder">
 				<span>No data available for the selected time range</span>
