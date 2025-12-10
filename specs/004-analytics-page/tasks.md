@@ -76,12 +76,12 @@
 
 ### Implementation for User Story 4
 
-- [ ] T017 [US4] Create TimeRangeSelector.svelte component in src/lib/components/TimeRangeSelector.svelte
-- [ ] T018 [US4] Implement preset buttons (7d, 30d, 90d, all) in TimeRangeSelector.svelte
-- [ ] T019 [US4] Add default selection state (30d) in TimeRangeSelector.svelte
-- [ ] T020 [US4] Integrate TimeRangeSelector in analytics page header
-- [ ] T021 [US4] Connect time range selection to VolumeChart data fetching
-- [ ] T022 [US4] Add loading state during time range changes
+- [x] T017 [US4] Create TimeRangeSelector.svelte component in src/lib/components/TimeRangeSelector.svelte
+- [x] T018 [US4] Implement preset buttons (7d, 30d, 90d, all) in TimeRangeSelector.svelte
+- [x] T019 [US4] Add default selection state (30d) in TimeRangeSelector.svelte
+- [x] T020 [US4] Integrate TimeRangeSelector in analytics page header
+- [x] T021 [US4] Connect time range selection to VolumeChart data fetching
+- [x] T022 [US4] Add loading state during time range changes
 
 **Checkpoint**: User Story 4 complete - time range selector controls volume chart, independently testable
 
