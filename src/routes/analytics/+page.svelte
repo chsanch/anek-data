@@ -1,11 +1,17 @@
 <script lang="ts">
 	import VolumeChart from '$lib/components/charts/VolumeChart.svelte';
+	import DirectionChart from '$lib/components/charts/DirectionChart.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { getDataContext } from '$lib/db/context';
-	import { getDailyVolume, type DashboardStats, getDashboardStats } from '$lib/db/queries';
+	import {
+		getDailyVolume,
+		getDailyDirectionVolume,
+		type DashboardStats,
+		getDashboardStats
+	} from '$lib/db/queries';
 	import { calculateDateRange } from '$lib/utils/date-range';
 	import { formatCompact } from '$lib/utils/format';
-	import type { DailyVolume, TimeRangePreset } from '$lib/types/analytics';
+	import type { DailyVolume, DailyDirectionVolume, TimeRangePreset } from '$lib/types/analytics';
 	import { DEFAULT_TIME_RANGE, TIME_RANGE_OPTIONS } from '$lib/types/analytics';
 
 	const dataContext = getDataContext();
@@ -13,10 +19,15 @@
 	// Time range state
 	let selectedTimeRange: TimeRangePreset = $state(DEFAULT_TIME_RANGE);
 
-	// Chart data state
+	// Volume chart data state
 	let volumeData: DailyVolume[] = $state([]);
 	let volumeLoading = $state(false);
 	let volumeError: string | null = $state(null);
+
+	// Direction chart data state
+	let directionData: DailyDirectionVolume[] = $state([]);
+	let directionLoading = $state(false);
+	let directionError: string | null = $state(null);
 
 	// Stats for summary
 	let stats: DashboardStats | null = $state(null);
@@ -25,6 +36,7 @@
 	$effect(() => {
 		if (dataContext.state.initialized && dataContext.db) {
 			loadVolumeData();
+			loadDirectionData();
 			loadStats();
 		}
 	});
@@ -46,6 +58,23 @@
 		}
 	}
 
+	async function loadDirectionData() {
+		if (!dataContext.db) return;
+
+		directionLoading = true;
+		directionError = null;
+
+		try {
+			const { start, end } = calculateDateRange(selectedTimeRange);
+			directionData = await getDailyDirectionVolume(dataContext.db, start, end);
+		} catch (err) {
+			directionError = err instanceof Error ? err.message : 'Failed to load direction data';
+			directionData = [];
+		} finally {
+			directionLoading = false;
+		}
+	}
+
 	async function loadStats() {
 		if (!dataContext.db) return;
 
@@ -61,6 +90,7 @@
 		const target = event.target as HTMLSelectElement;
 		selectedTimeRange = target.value as TimeRangePreset;
 		loadVolumeData();
+		loadDirectionData();
 	}
 </script>
 
@@ -133,6 +163,19 @@
 				loading={volumeLoading}
 				error={volumeError}
 				onRetry={loadVolumeData}
+			/>
+		</section>
+
+		<!-- Buy vs Sell Direction Chart Section -->
+		<section class="chart-section">
+			<div class="section-header">
+				<h2>Buy vs Sell Volume</h2>
+			</div>
+			<DirectionChart
+				data={directionData}
+				loading={directionLoading}
+				error={directionError}
+				onRetry={loadDirectionData}
 			/>
 		</section>
 	{/if}
