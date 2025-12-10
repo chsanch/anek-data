@@ -54,15 +54,15 @@
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Create VolumeChart.svelte component in src/lib/components/charts/VolumeChart.svelte
-- [ ] T009 [US1] Implement Lightweight Charts integration with $effect lifecycle in VolumeChart.svelte
-- [ ] T010 [US1] Add loading state handling in VolumeChart.svelte
-- [ ] T011 [US1] Add empty state handling in VolumeChart.svelte
-- [ ] T012 [US1] Add error state with retry capability in VolumeChart.svelte
-- [ ] T013 [US1] Create analytics page route at src/routes/analytics/+page.svelte
-- [ ] T014 [US1] Add page header and layout structure in src/routes/analytics/+page.svelte
-- [ ] T015 [US1] Integrate VolumeChart component in analytics page
-- [ ] T016 [US1] Add dark/light theme support for VolumeChart styling
+- [x] T008 [US1] Create VolumeChart.svelte component in src/lib/components/charts/VolumeChart.svelte
+- [x] T009 [US1] Implement Lightweight Charts integration with $effect lifecycle in VolumeChart.svelte
+- [x] T010 [US1] Add loading state handling in VolumeChart.svelte
+- [x] T011 [US1] Add empty state handling in VolumeChart.svelte
+- [x] T012 [US1] Add error state with retry capability in VolumeChart.svelte
+- [x] T013 [US1] Create analytics page route at src/routes/analytics/+page.svelte
+- [x] T014 [US1] Add page header and layout structure in src/routes/analytics/+page.svelte
+- [x] T015 [US1] Integrate VolumeChart component in analytics page
+- [x] T016 [US1] Add dark/light theme support for VolumeChart styling
 
 **Checkpoint**: User Story 1 complete - analytics page shows daily volume chart, independently testable
 
@@ -177,11 +177,13 @@ Phase 2: Foundational (queries)
 ### Parallel Opportunities
 
 **Phase 1 (Setup)**:
+
 ```
 T002 (types) + T003 (directory) can run in parallel
 ```
 
 **Phase 2 (Foundational)**:
+
 ```
 T004 (daily volume query)
 T005 (direction query) [P]
@@ -189,12 +191,14 @@ T006 (status query) [P]
 ```
 
 **After Foundational completes**:
+
 ```
 US1 can start immediately (P1 priority - MVP)
 US3 can start in parallel (different component, no US1 dependency)
 ```
 
 **Phase 5 & 6**:
+
 ```
 T023 (DirectionChart) + T030 (StatusDistribution) can be created in parallel
 ```
@@ -241,6 +245,7 @@ Task: "Create StatusDistribution.svelte component in src/lib/components/charts/S
 ### Recommended Execution Order
 
 For single developer:
+
 1. T001 → T002, T003 (parallel) → T004 → T005, T006, T007 (parallel)
 2. T008 → T009 → T010 → T011 → T012 → T013 → T014 → T015 → T016
 3. T017 → T018 → T019 → T020 → T021 → T022
