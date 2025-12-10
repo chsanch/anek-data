@@ -1,17 +1,24 @@
 <script lang="ts">
 	import VolumeChart from '$lib/components/charts/VolumeChart.svelte';
 	import DirectionChart from '$lib/components/charts/DirectionChart.svelte';
+	import StatusDistribution from '$lib/components/charts/StatusDistribution.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { getDataContext } from '$lib/db/context';
 	import {
 		getDailyVolume,
 		getDailyDirectionVolume,
+		getStatusDistribution,
 		type DashboardStats,
 		getDashboardStats
 	} from '$lib/db/queries';
 	import { calculateDateRange } from '$lib/utils/date-range';
 	import { formatCompact } from '$lib/utils/format';
-	import type { DailyVolume, DailyDirectionVolume, TimeRangePreset } from '$lib/types/analytics';
+	import type {
+		DailyVolume,
+		DailyDirectionVolume,
+		StatusDistribution as StatusDistributionType,
+		TimeRangePreset
+	} from '$lib/types/analytics';
 	import { DEFAULT_TIME_RANGE, TIME_RANGE_OPTIONS } from '$lib/types/analytics';
 
 	const dataContext = getDataContext();
@@ -29,6 +36,11 @@
 	let directionLoading = $state(false);
 	let directionError: string | null = $state(null);
 
+	// Status distribution data state
+	let statusData: StatusDistributionType[] = $state([]);
+	let statusLoading = $state(false);
+	let statusError: string | null = $state(null);
+
 	// Stats for summary
 	let stats: DashboardStats | null = $state(null);
 
@@ -37,6 +49,7 @@
 		if (dataContext.state.initialized && dataContext.db) {
 			loadVolumeData();
 			loadDirectionData();
+			loadStatusData();
 			loadStats();
 		}
 	});
@@ -72,6 +85,22 @@
 			directionData = [];
 		} finally {
 			directionLoading = false;
+		}
+	}
+
+	async function loadStatusData() {
+		if (!dataContext.db) return;
+
+		statusLoading = true;
+		statusError = null;
+
+		try {
+			statusData = await getStatusDistribution(dataContext.db);
+		} catch (err) {
+			statusError = err instanceof Error ? err.message : 'Failed to load status data';
+			statusData = [];
+		} finally {
+			statusLoading = false;
 		}
 	}
 
@@ -176,6 +205,16 @@
 				loading={directionLoading}
 				error={directionError}
 				onRetry={loadDirectionData}
+			/>
+		</section>
+
+		<!-- Status Distribution Section -->
+		<section class="chart-section">
+			<StatusDistribution
+				data={statusData}
+				loading={statusLoading}
+				error={statusError}
+				onRetry={loadStatusData}
 			/>
 		</section>
 	{/if}
