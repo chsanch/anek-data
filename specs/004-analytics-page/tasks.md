@@ -25,9 +25,9 @@
 
 **Purpose**: Install dependency and create base structure
 
-- [ ] T001 Install lightweight-charts dependency via `pnpm add lightweight-charts`
-- [ ] T002 [P] Create analytics types file at src/lib/types/analytics.ts
-- [ ] T003 [P] Create charts component directory at src/lib/components/charts/
+- [x] T001 Install lightweight-charts dependency via `pnpm add lightweight-charts`
+- [x] T002 [P] Create analytics types file at src/lib/types/analytics.ts
+- [x] T003 [P] Create charts component directory at src/lib/components/charts/
 
 ---
 
