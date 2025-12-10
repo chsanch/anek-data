@@ -1,5 +1,6 @@
 import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
 import type { UnifiedOrder } from '$lib/types/orders';
+import type { DailyVolume, DailyDirectionVolume, StatusDistribution } from '$lib/types/analytics';
 
 /**
  * Export options for CSV download
@@ -562,4 +563,99 @@ export function downloadCsv(content: string, filename: string): void {
 	link.click();
 	document.body.removeChild(link);
 	URL.revokeObjectURL(url);
+}
+
+// ============================================================================
+// Analytics Query Functions
+// ============================================================================
+
+/**
+ * Get daily aggregated volume for time-series chart
+ * Returns data in Lightweight Charts format (time, value)
+ */
+export async function getDailyVolume(
+	db: AsyncDuckDB,
+	startDate: string,
+	endDate: string
+): Promise<DailyVolume[]> {
+	const conn = await db.connect();
+	try {
+		const result = await conn.query(`
+			SELECT
+				strftime(creation_date, '%Y-%m-%d') as time,
+				(SUM(sell_amount_cents)::DOUBLE / 100.0) as value,
+				COUNT(*)::BIGINT as trade_count
+			FROM orders
+			WHERE creation_date >= DATE '${startDate}' AND creation_date <= DATE '${endDate}'
+			GROUP BY creation_date
+			ORDER BY creation_date
+		`);
+
+		return result.toArray().map((row) => ({
+			time: String(row.time),
+			value: toSafeNumber(row.value),
+			tradeCount: toSafeNumber(row.trade_count)
+		}));
+	} finally {
+		await conn.close();
+	}
+}
+
+/**
+ * Get daily buy vs sell volume breakdown for histogram chart
+ * Returns buy and sell volumes separately for each day
+ */
+export async function getDailyDirectionVolume(
+	db: AsyncDuckDB,
+	startDate: string,
+	endDate: string
+): Promise<DailyDirectionVolume[]> {
+	const conn = await db.connect();
+	try {
+		const result = await conn.query(`
+			SELECT
+				strftime(creation_date, '%Y-%m-%d') as time,
+				(SUM(CASE WHEN market_direction = 'buy' THEN buy_amount_cents ELSE 0 END)::DOUBLE / 100.0) as buy_volume,
+				(SUM(CASE WHEN market_direction = 'sell' THEN sell_amount_cents ELSE 0 END)::DOUBLE / 100.0) as sell_volume
+			FROM orders
+			WHERE creation_date >= DATE '${startDate}' AND creation_date <= DATE '${endDate}'
+			GROUP BY creation_date
+			ORDER BY creation_date
+		`);
+
+		return result.toArray().map((row) => ({
+			time: String(row.time),
+			buyVolume: toSafeNumber(row.buy_volume),
+			sellVolume: toSafeNumber(row.sell_volume)
+		}));
+	} finally {
+		await conn.close();
+	}
+}
+
+/**
+ * Get order count and percentage breakdown by status
+ * Returns data for HTML/CSS bar visualization
+ */
+export async function getStatusDistribution(db: AsyncDuckDB): Promise<StatusDistribution[]> {
+	const conn = await db.connect();
+	try {
+		const result = await conn.query(`
+			SELECT
+				status,
+				COUNT(*)::BIGINT as count,
+				(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER ())::DOUBLE as percentage
+			FROM orders
+			GROUP BY status
+			ORDER BY count DESC
+		`);
+
+		return result.toArray().map((row) => ({
+			status: String(row.status) as StatusDistribution['status'],
+			count: toSafeNumber(row.count),
+			percentage: toSafeNumber(row.percentage)
+		}));
+	} finally {
+		await conn.close();
+	}
 }

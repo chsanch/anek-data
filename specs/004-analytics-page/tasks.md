@@ -37,10 +37,10 @@
 
 **⚠️ CRITICAL**: No chart implementation can begin until queries are ready
 
-- [ ] T004 Add getDailyVolume query function in src/lib/db/queries.ts
-- [ ] T005 [P] Add getDailyDirectionVolume query function in src/lib/db/queries.ts
-- [ ] T006 [P] Add getStatusDistribution query function in src/lib/db/queries.ts
-- [ ] T007 Add calculateDateRange utility function in src/lib/utils/date-range.ts
+- [x] T004 Add getDailyVolume query function in src/lib/db/queries.ts
+- [x] T005 [P] Add getDailyDirectionVolume query function in src/lib/db/queries.ts
+- [x] T006 [P] Add getStatusDistribution query function in src/lib/db/queries.ts
+- [x] T007 Add calculateDateRange utility function in src/lib/utils/date-range.ts
 
 **Checkpoint**: All analytics queries available - chart components can now be built
 
