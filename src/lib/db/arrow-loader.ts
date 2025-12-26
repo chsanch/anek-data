@@ -5,7 +5,10 @@ import type { DataError } from './types';
  * Load Arrow IPC stream data from a URL into DuckDB
  * Fetches Arrow data, converts to rows, and inserts into DuckDB table
  */
-export async function loadArrowFromUrl(db: AsyncDuckDB, url: string): Promise<{ rowCount: number }> {
+export async function loadArrowFromUrl(
+	db: AsyncDuckDB,
+	url: string
+): Promise<{ rowCount: number }> {
 	// Fetch the Arrow IPC stream (browser will auto-decompress brotli/gzip)
 	const response = await fetch(url, {
 		headers: {

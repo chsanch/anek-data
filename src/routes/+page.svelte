@@ -1,14 +1,12 @@
 <script lang="ts">
 	import StatCard from '$lib/components/StatCard.svelte';
 	import OrdersTable from '$lib/components/OrdersTable.svelte';
-	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import RefreshButton from '$lib/components/RefreshButton.svelte';
 	import LoadingIndicator from '$lib/components/LoadingIndicator.svelte';
 	import ErrorMessage from '$lib/components/ErrorMessage.svelte';
 	import ExportModal from '$lib/components/ExportModal.svelte';
 	import ReferenceSearch from '$lib/components/ReferenceSearch.svelte';
 	import TableToolbar from '$lib/components/TableToolbar.svelte';
-	import CacheIndicator from '$lib/components/CacheIndicator.svelte';
 	import type { ExportOptions } from '$lib/components/ExportModal.svelte';
 	import { formatCompact } from '$lib/utils/format';
 	import { QueryCache } from '$lib/utils/debounce';
@@ -72,7 +70,6 @@
 		avgRate: 0,
 		totalChains: 0
 	});
-	let statsLoading = $state(false);
 
 	// Volume by currency state
 	let volumeByCurrency: VolumeByCurrency[] = $state([]);
@@ -168,15 +165,12 @@
 			}
 		}
 
-		statsLoading = true;
 		try {
 			const fetchedStats = await getDashboardStats(dataContext.db);
 			stats = fetchedStats;
 			statsCache.set(cacheKey, fetchedStats);
 		} catch (e) {
 			console.error('Failed to load stats:', e);
-		} finally {
-			statsLoading = false;
 		}
 	}
 
@@ -269,43 +263,12 @@
 </script>
 
 <svelte:head>
-	<title>ANEK FX Analytics</title>
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-	<link
-		href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
-		rel="stylesheet"
-	/>
+	<title>ANEK FX Analytics - Dashboard</title>
 </svelte:head>
 
 <div class="dashboard">
-	<!-- Header -->
-	<header class="header">
-		<div class="header-left">
-			<div class="logo">
-				<span class="logo-mark">A</span>
-				<span class="logo-text">ANEK</span>
-			</div>
-			<nav class="nav">
-				<a href="/" class="nav-link active">Dashboard</a>
-				<a href="/orders" class="nav-link">Orders</a>
-				<a href="/chains" class="nav-link">Chains</a>
-				<a href="/analytics" class="nav-link">Analytics</a>
-			</nav>
-		</div>
-		<div class="header-right">
-			<CacheIndicator
-				status={dataContext.cacheStatus}
-				onRefresh={dataContext.forceRefresh}
-				refreshing={dataContext.state.loading}
-			/>
-			<time class="timestamp">{new Date().toLocaleString('en-GB', { hour12: false })}</time>
-			<ThemeToggle />
-		</div>
-	</header>
-
 	<!-- Main Content -->
-	<main class="main">
+	<div class="main">
 		<!-- Stats Row -->
 		<section class="stats-grid">
 			<StatCard label="Total Trades" value={stats.totalTrades.toLocaleString()} variant="primary" />
@@ -416,7 +379,7 @@
 				/>
 			{/if}
 		</section>
-	</main>
+	</div>
 </div>
 
 <!-- Export Modal -->
@@ -436,94 +399,9 @@
 
 <style>
 	.dashboard {
-		min-height: 100vh;
+		flex: 1;
 		display: flex;
 		flex-direction: column;
-	}
-
-	/* Header */
-	.header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 0 24px;
-		height: 56px;
-		background: var(--bg-elevated);
-		border-bottom: 1px solid var(--border-primary);
-		position: sticky;
-		top: 0;
-		z-index: 100;
-		transition:
-			background 0.3s ease,
-			border-color 0.3s ease;
-	}
-
-	.header-left {
-		display: flex;
-		align-items: center;
-		gap: 32px;
-	}
-
-	.logo {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-	}
-
-	.logo-mark {
-		width: 28px;
-		height: 28px;
-		background: var(--gradient-primary);
-		color: var(--bg-primary);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-family: 'IBM Plex Mono', monospace;
-		font-weight: 600;
-		font-size: 14px;
-	}
-
-	.logo-text {
-		font-family: 'IBM Plex Mono', monospace;
-		font-weight: 600;
-		font-size: 16px;
-		letter-spacing: 0.1em;
-		color: var(--text-white);
-	}
-
-	.nav {
-		display: flex;
-		gap: 4px;
-	}
-
-	.nav-link {
-		padding: 8px 16px;
-		font-size: 13px;
-		font-weight: 500;
-		color: var(--text-muted);
-		text-decoration: none;
-		transition: all 0.15s ease;
-	}
-
-	.nav-link:hover {
-		color: var(--text-primary);
-	}
-
-	.nav-link.active {
-		color: var(--accent-primary);
-		background: var(--accent-primary-muted);
-	}
-
-	.header-right {
-		display: flex;
-		align-items: center;
-		gap: 20px;
-	}
-
-	.timestamp {
-		font-family: 'IBM Plex Mono', monospace;
-		font-size: 12px;
-		color: var(--text-muted);
 	}
 
 	/* Main */

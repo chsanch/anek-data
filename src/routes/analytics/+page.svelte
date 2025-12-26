@@ -2,7 +2,6 @@
 	import VolumeChart from '$lib/components/charts/VolumeChart.svelte';
 	import DirectionChart from '$lib/components/charts/DirectionChart.svelte';
 	import StatusDistribution from '$lib/components/charts/StatusDistribution.svelte';
-	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { getDataContext } from '$lib/db/context';
 	import {
 		getDailyVolume,
@@ -20,7 +19,6 @@
 		TimeRangePreset
 	} from '$lib/types/analytics';
 	import { DEFAULT_TIME_RANGE, TIME_RANGE_OPTIONS } from '$lib/types/analytics';
-	import { resolve } from '$app/paths';
 
 	const dataContext = getDataContext();
 
@@ -124,28 +122,14 @@
 	}
 </script>
 
+<svelte:head>
+	<title>ANEK FX Analytics - Analytics</title>
+</svelte:head>
+
 <div class="analytics-page">
-	<header class="page-header">
-		<div class="header-left">
-			<a href={resolve('/')} class="back-link">
-				<svg
-					width="20"
-					height="20"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-				>
-					<path d="M19 12H5M12 19l-7-7 7-7" />
-				</svg>
-				Dashboard
-			</a>
-			<h1>Analytics</h1>
-		</div>
-		<div class="header-right">
-			<ThemeToggle />
-		</div>
-	</header>
+	<div class="page-header">
+		<h1>Analytics</h1>
+	</div>
 
 	{#if !dataContext.state.initialized}
 		<div class="loading-state">
@@ -223,36 +207,12 @@
 
 <style>
 	.analytics-page {
-		min-height: 100vh;
+		flex: 1;
 		padding: 24px;
-		background: var(--page-bg, #0a0b0d);
 	}
 
 	.page-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
 		margin-bottom: 24px;
-	}
-
-	.header-left {
-		display: flex;
-		align-items: center;
-		gap: 16px;
-	}
-
-	.back-link {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		color: var(--text-secondary, #9ca3af);
-		text-decoration: none;
-		font-size: 14px;
-		transition: color 0.2s;
-	}
-
-	.back-link:hover {
-		color: var(--text-primary, #ffffff);
 	}
 
 	h1 {
@@ -260,12 +220,6 @@
 		font-weight: 600;
 		color: var(--text-primary, #ffffff);
 		margin: 0;
-	}
-
-	.header-right {
-		display: flex;
-		align-items: center;
-		gap: 12px;
 	}
 
 	.loading-state,
@@ -385,14 +339,6 @@
 
 	:global([data-theme='light']) h1,
 	:global([data-theme='light']) h2 {
-		color: #111827;
-	}
-
-	:global([data-theme='light']) .back-link {
-		color: #6b7280;
-	}
-
-	:global([data-theme='light']) .back-link:hover {
 		color: #111827;
 	}
 
