@@ -211,10 +211,10 @@ def main():
     # Report file size
     import os
     file_size = os.path.getsize(OUTPUT_FILE)
-    print(f"\n--- Output ---")
+    print("\n--- Output ---")
     print(f"File: {OUTPUT_FILE}")
     print(f"Size: {file_size:,} bytes ({file_size / 1024 / 1024:.2f} MB)")
-    print(f"Compression: snappy")
+    print("Compression: snappy")
 
 
 if __name__ == "__main__":

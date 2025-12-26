@@ -2,14 +2,22 @@
 	import { setContext, onMount } from 'svelte';
 	import type { Snippet } from 'svelte';
 	import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
-	import { PUBLIC_PARQUET_URL, PUBLIC_CACHE_TTL } from '$env/static/public';
+	import {
+		PUBLIC_PARQUET_URL,
+		PUBLIC_CACHE_TTL,
+		PUBLIC_ARROW_URL,
+		PUBLIC_DATA_SOURCE
+	} from '$env/static/public';
 	import { initDuckDB } from '$lib/db/duckdb';
 	import { loadParquetWithCache, validateSchema } from '$lib/db/loader';
+	import { loadArrowFromUrl } from '$lib/db/arrow-loader';
 	import type { DataState, DataError } from '$lib/db/types';
 	import { DATA_PROVIDER_KEY } from '$lib/db/context';
 	import { ParquetCacheService } from '$lib/db/cache';
 	import { INITIAL_CACHE_STATUS } from '$lib/db/cache-types';
 	import type { CacheStatus } from '$lib/db/cache-types';
+
+	const dataSource = PUBLIC_DATA_SOURCE || 'parquet';
 
 	interface Props {
 		children: Snippet;
@@ -40,33 +48,53 @@
 				db = await initDuckDB();
 			}
 
-			// Initialize cache service if not already done
-			if (!cacheService) {
-				cacheService = new ParquetCacheService({ ttl: cacheTtl });
-				await cacheService.init();
+			if (dataSource === 'arrow') {
+				// Load from Arrow endpoint (Rust server)
+				await loadArrowFromUrl(db, PUBLIC_ARROW_URL);
+
+				// Validate schema
+				const missingColumns = await validateSchema(db);
+				if (missingColumns.length > 0) {
+					const error: DataError = {
+						type: 'parse',
+						message: 'Arrow data is missing required columns',
+						details: `Missing: ${missingColumns.join(', ')}`
+					};
+					throw error;
+				}
+
+				dataState.initialized = true;
+				dataState.lastRefresh = new Date();
+			} else {
+				// Load from Parquet with cache (original behavior)
+				// Initialize cache service if not already done
+				if (!cacheService) {
+					cacheService = new ParquetCacheService({ ttl: cacheTtl });
+					await cacheService.init();
+				}
+
+				// Load parquet data with cache
+				const result = await loadParquetWithCache(db, PUBLIC_PARQUET_URL, cacheService, {
+					forceRefresh
+				});
+
+				// Update cache status from service
+				cacheStatus = cacheService.getStatus();
+
+				// Validate schema
+				const missingColumns = await validateSchema(db);
+				if (missingColumns.length > 0) {
+					const error: DataError = {
+						type: 'parse',
+						message: 'Parquet file is missing required columns',
+						details: `Missing: ${missingColumns.join(', ')}`
+					};
+					throw error;
+				}
+
+				dataState.initialized = true;
+				dataState.lastRefresh = new Date(result.metadata.timestamp);
 			}
-
-			// Load parquet data with cache
-			const result = await loadParquetWithCache(db, PUBLIC_PARQUET_URL, cacheService, {
-				forceRefresh
-			});
-
-			// Update cache status from service
-			cacheStatus = cacheService.getStatus();
-
-			// Validate schema
-			const missingColumns = await validateSchema(db);
-			if (missingColumns.length > 0) {
-				const error: DataError = {
-					type: 'parse',
-					message: 'Parquet file is missing required columns',
-					details: `Missing: ${missingColumns.join(', ')}`
-				};
-				throw error;
-			}
-
-			dataState.initialized = true;
-			dataState.lastRefresh = new Date(result.metadata.timestamp);
 		} catch (e) {
 			// Update cache status on error
 			if (cacheService) {
