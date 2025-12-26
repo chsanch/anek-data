@@ -97,8 +97,10 @@ src/
 - Public env vars must be prefixed with `PUBLIC_`
 - Access via `$env/static/public` or `$env/dynamic/public`
 - Current env vars:
+  - `PUBLIC_DATA_SOURCE`: Data source type (`'arrow'` or `'parquet'`, default: `'parquet'`)
   - `PUBLIC_PARQUET_URL`: URL to remote parquet file
-  - `PUBLIC_CACHE_TTL`: Cache time-to-live in milliseconds (default: 3600000 = 1 hour)
+  - `PUBLIC_ARROW_URL`: URL to Arrow IPC stream endpoint (Rust server)
+  - `PUBLIC_CACHE_TTL`: Cache time-to-live in milliseconds (default: 86400000 = 24 hours)
 
 ## Testing Local Parquet Server
 
@@ -112,11 +114,12 @@ Then set `PUBLIC_PARQUET_URL=http://localhost:8888/orders.parquet` in `.env`
 
 ## Caching Architecture
 
-The application uses IndexedDB to cache parquet files for faster page loads:
+The application uses IndexedDB to cache data files (both Parquet and Arrow) for faster page loads:
 
 - **Cache Service**: `src/lib/db/cache.ts` - `ParquetCacheService` class handles all caching logic
 - **Cache Types**: `src/lib/db/cache-types.ts` - TypeScript interfaces for cache entities
 - **Cache Indicator**: `src/lib/components/CacheIndicator.svelte` - UI component showing cache status
+- **Arrow Loader**: `src/lib/db/arrow-loader.ts` - Loads Arrow IPC streams with cache support
 
 ### Cache Features
 
@@ -135,6 +138,8 @@ The application uses IndexedDB to cache parquet files for faster page loads:
 - `error`: Failed to load
 
 ## Recent Changes
+
+- 005-arrow-cache: Extended IndexedDB caching to Arrow data source, smart relative timestamps in CacheIndicator, 24h default TTL
 
 - 004-analytics-page: Added TypeScript 5.9 (strict mode) + SvelteKit 2.48, Svelte 5.43, Lightweight Charts (TradingView), DuckDB WASM 1.30, TanStack Table Core 8.21
 
