@@ -101,15 +101,20 @@ export class ParquetCacheService {
 	}
 
 	/**
-	 * Load parquet data from cache or network
+	 * Load data from cache or network
 	 *
-	 * @param url - Source URL of the parquet file
+	 * @param url - Source URL of the data file
 	 * @param options.forceRefresh - Bypass cache and fetch from network
+	 * @param options.fetchOptions - Custom fetch options (headers, etc.)
 	 * @returns LoadResult with data buffer and metadata
 	 * @throws Error if network fails and no usable cache exists
 	 */
-	async loadData(url: string, options?: { forceRefresh?: boolean }): Promise<LoadResult> {
+	async loadData(
+		url: string,
+		options?: { forceRefresh?: boolean; fetchOptions?: RequestInit }
+	): Promise<LoadResult> {
 		const forceRefresh = options?.forceRefresh ?? false;
+		const customFetchOptions = options?.fetchOptions ?? {};
 
 		this.updateStatus({ state: 'checking' });
 
@@ -165,13 +170,20 @@ export class ParquetCacheService {
 		this.updateStatus({ state: 'loading' });
 
 		try {
-			// Build fetch options with conditional headers if we have a cached ETag
-			const fetchOptions: RequestInit = {};
+			// Build fetch options: merge custom options with conditional ETag header
+			const fetchHeaders: HeadersInit = {
+				...(customFetchOptions.headers as Record<string, string>)
+			};
+
+			// Add ETag header for conditional request if we have a cached entry
 			if (cachedEntry?.etag && !forceRefresh) {
-				fetchOptions.headers = {
-					'If-None-Match': cachedEntry.etag
-				};
+				fetchHeaders['If-None-Match'] = cachedEntry.etag;
 			}
+
+			const fetchOptions: RequestInit = {
+				...customFetchOptions,
+				headers: fetchHeaders
+			};
 
 			const response = await fetch(url, fetchOptions);
 

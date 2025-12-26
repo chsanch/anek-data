@@ -1,5 +1,7 @@
 import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
 import type { DataError } from './types';
+import type { ParquetCacheService } from './cache';
+import type { LoadResult } from './cache-types';
 
 /**
  * Load Arrow IPC stream data from a URL into DuckDB
@@ -36,35 +38,8 @@ export async function loadArrowFromUrl(
 		throw error;
 	}
 
-	// Create the table schema in DuckDB
-	const conn = await db.connect();
-	let rowCount = 0;
-
-	try {
-		// Drop existing table if exists
-		await conn.query('DROP TABLE IF EXISTS orders');
-
-		// Efficiently insert Arrow IPC stream directly into DuckDB
-		// This avoids parsing the table in JS and avoids version mismatches with apache-arrow
-		await conn.insertArrowFromIPCStream(new Uint8Array(buffer), {
-			name: 'orders',
-			create: true
-		});
-
-		// Get the row count
-		const result = await conn.query('SELECT count(*) as count FROM orders');
-		const row = result.toArray()[0];
-		rowCount = Number(row.count);
-	} catch (e) {
-		const error: DataError = {
-			type: 'parse',
-			message: 'Failed to load Arrow data into DuckDB',
-			details: e instanceof Error ? e.message : String(e)
-		};
-		throw error;
-	} finally {
-		await conn.close();
-	}
+	// Load buffer into DuckDB using shared helper
+	const rowCount = await loadArrowBuffer(db, buffer);
 
 	if (rowCount === 0) {
 		const error: DataError = {
@@ -76,4 +51,78 @@ export async function loadArrowFromUrl(
 	}
 
 	return { rowCount };
+}
+
+/**
+ * Load Arrow buffer into DuckDB (internal helper)
+ */
+async function loadArrowBuffer(db: AsyncDuckDB, buffer: ArrayBuffer): Promise<number> {
+	const conn = await db.connect();
+	let rowCount = 0;
+
+	try {
+		await conn.query('DROP TABLE IF EXISTS orders');
+		await conn.insertArrowFromIPCStream(new Uint8Array(buffer), {
+			name: 'orders',
+			create: true
+		});
+
+		const result = await conn.query('SELECT count(*) as count FROM orders');
+		const row = result.toArray()[0];
+		rowCount = Number(row.count);
+	} finally {
+		await conn.close();
+	}
+
+	return rowCount;
+}
+
+/**
+ * Load Arrow IPC stream data using cache service
+ * Uses IndexedDB cache when available, falls back to network
+ *
+ * @param db - DuckDB instance
+ * @param url - URL to fetch Arrow data from
+ * @param cacheService - Cache service instance (reuses parquet cache infrastructure)
+ * @param options - Load options
+ * @returns LoadResult with cache metadata
+ */
+export async function loadArrowWithCache(
+	db: AsyncDuckDB,
+	url: string,
+	cacheService: ParquetCacheService,
+	options?: { forceRefresh?: boolean }
+): Promise<LoadResult> {
+	// Load data from cache or network using the cache service
+	const result = await cacheService.loadData(url, {
+		forceRefresh: options?.forceRefresh,
+		fetchOptions: {
+			headers: {
+				Accept: 'application/vnd.apache.arrow.stream'
+			}
+		}
+	});
+
+	if (result.data.byteLength === 0) {
+		const error: DataError = {
+			type: 'parse',
+			message: 'Arrow data is empty',
+			details: url
+		};
+		throw error;
+	}
+
+	// Load the Arrow buffer into DuckDB
+	const rowCount = await loadArrowBuffer(db, result.data);
+
+	if (rowCount === 0) {
+		const error: DataError = {
+			type: 'parse',
+			message: 'Arrow table has no rows',
+			details: url
+		};
+		throw error;
+	}
+
+	return result;
 }

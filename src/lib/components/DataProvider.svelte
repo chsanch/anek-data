@@ -10,7 +10,7 @@
 	} from '$env/static/public';
 	import { initDuckDB } from '$lib/db/duckdb';
 	import { loadParquetWithCache, validateSchema } from '$lib/db/loader';
-	import { loadArrowFromUrl } from '$lib/db/arrow-loader';
+	import { loadArrowWithCache } from '$lib/db/arrow-loader';
 	import type { DataState, DataError } from '$lib/db/types';
 	import { DATA_PROVIDER_KEY } from '$lib/db/context';
 	import { ParquetCacheService } from '$lib/db/cache';
@@ -25,8 +25,8 @@
 
 	let { children }: Props = $props();
 
-	// Parse TTL from environment variable
-	const cacheTtl = parseInt(PUBLIC_CACHE_TTL || '', 10) || 60 * 60 * 1000;
+	// Parse TTL from environment variable (default: 24 hours for better persistence)
+	const cacheTtl = parseInt(PUBLIC_CACHE_TTL || '', 10) || 24 * 60 * 60 * 1000;
 
 	let db: AsyncDuckDB | null = $state(null);
 	let cacheService: ParquetCacheService | null = $state(null);
@@ -48,9 +48,20 @@
 				db = await initDuckDB();
 			}
 
+			// Initialize cache service if not already done (used for both Arrow and Parquet)
+			if (!cacheService) {
+				cacheService = new ParquetCacheService({ ttl: cacheTtl });
+				await cacheService.init();
+			}
+
 			if (dataSource === 'arrow') {
-				// Load from Arrow endpoint (Rust server)
-				await loadArrowFromUrl(db, PUBLIC_ARROW_URL);
+				// Load from Arrow endpoint with cache
+				const result = await loadArrowWithCache(db, PUBLIC_ARROW_URL, cacheService, {
+					forceRefresh
+				});
+
+				// Update cache status from service
+				cacheStatus = cacheService.getStatus();
 
 				// Validate schema
 				const missingColumns = await validateSchema(db);
@@ -64,16 +75,9 @@
 				}
 
 				dataState.initialized = true;
-				dataState.lastRefresh = new Date();
+				dataState.lastRefresh = new Date(result.metadata.timestamp);
 			} else {
-				// Load from Parquet with cache (original behavior)
-				// Initialize cache service if not already done
-				if (!cacheService) {
-					cacheService = new ParquetCacheService({ ttl: cacheTtl });
-					await cacheService.init();
-				}
-
-				// Load parquet data with cache
+				// Load from Parquet with cache
 				const result = await loadParquetWithCache(db, PUBLIC_PARQUET_URL, cacheService, {
 					forceRefresh
 				});
