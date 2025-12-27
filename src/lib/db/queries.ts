@@ -27,6 +27,12 @@ export interface DashboardStats {
 	closedToTradingOrders: number;
 	completionRate: number;
 	totalChains: number;
+	ordersToday: number;
+	buyCount: number;
+	sellCount: number;
+	topLpName: string;
+	topLpOrderCount: number;
+	topLpPercentage: number;
 }
 
 /**
@@ -353,7 +359,10 @@ export async function getDashboardStats(db: AsyncDuckDB): Promise<DashboardStats
 				COUNT(*) FILTER (WHERE o.status = 'completed')::BIGINT as completed_orders,
 				COUNT(*) FILTER (WHERE o.status = 'closed_to_trading')::BIGINT as closed_to_trading_orders,
 				(COUNT(*) FILTER (WHERE o.status = 'completed') * 100.0 / NULLIF(COUNT(*), 0))::DOUBLE as completion_rate,
-				COUNT(*) FILTER (WHERE o.fx_order_type = 'chain')::BIGINT as total_chains
+				COUNT(*) FILTER (WHERE o.fx_order_type = 'chain')::BIGINT as total_chains,
+				COUNT(*) FILTER (WHERE DATE_TRUNC('day', o.creation_date) = CURRENT_DATE)::BIGINT as orders_today,
+				COUNT(*) FILTER (WHERE LOWER(o.market_direction) = 'buy')::BIGINT as buy_count,
+				COUNT(*) FILTER (WHERE LOWER(o.market_direction) = 'sell')::BIGINT as sell_count
 			FROM orders o
 			LEFT JOIN currencies c ON o.sell_currency = c.code
 		`);
@@ -371,6 +380,25 @@ export async function getDashboardStats(db: AsyncDuckDB): Promise<DashboardStats
 		`);
 		const uniqueCurrencies = toSafeNumber(currencyResult.toArray()[0].unique_currencies);
 
+		// Get top liquidity provider by order count
+		// Calculate percentage against ALL orders (not just orders with LP) for accurate concentration measure
+		const topLpResult = await conn.query(`
+			SELECT
+				liquidity_provider as lp_name,
+				COUNT(*)::BIGINT as order_count
+			FROM orders
+			WHERE liquidity_provider IS NOT NULL
+			GROUP BY liquidity_provider
+			ORDER BY order_count DESC
+			LIMIT 1
+		`);
+		const topLpRow = topLpResult.toArray()[0];
+		const topLpName = topLpRow ? String(topLpRow.lp_name) : '';
+		const topLpOrderCount = topLpRow ? toSafeNumber(topLpRow.order_count) : 0;
+		const totalTrades = toSafeNumber(row.total_trades);
+		// Percentage is against total orders, not just orders with LP
+		const topLpPercentage = totalTrades > 0 ? (topLpOrderCount * 100.0) / totalTrades : 0;
+
 		return {
 			totalTrades: toSafeNumber(row.total_trades),
 			totalVolume: toSafeNumber(row.total_volume),
@@ -379,7 +407,13 @@ export async function getDashboardStats(db: AsyncDuckDB): Promise<DashboardStats
 			completedOrders: toSafeNumber(row.completed_orders),
 			closedToTradingOrders: toSafeNumber(row.closed_to_trading_orders),
 			completionRate: toSafeNumber(row.completion_rate) || 0,
-			totalChains: toSafeNumber(row.total_chains)
+			totalChains: toSafeNumber(row.total_chains),
+			ordersToday: toSafeNumber(row.orders_today),
+			buyCount: toSafeNumber(row.buy_count),
+			sellCount: toSafeNumber(row.sell_count),
+			topLpName,
+			topLpOrderCount,
+			topLpPercentage
 		};
 	} finally {
 		await conn.close();

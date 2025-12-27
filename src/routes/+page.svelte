@@ -9,6 +9,7 @@
 	import TableToolbar from '$lib/components/TableToolbar.svelte';
 	import StatusDistribution from '$lib/components/charts/StatusDistribution.svelte';
 	import OrderTypeDistribution from '$lib/components/charts/OrderTypeDistribution.svelte';
+	import BuySellRatio from '$lib/components/charts/BuySellRatio.svelte';
 	import type { ExportOptions } from '$lib/components/ExportModal.svelte';
 	import { formatCompact } from '$lib/utils/format';
 	import { QueryCache } from '$lib/utils/debounce';
@@ -78,7 +79,13 @@
 		completedOrders: 0,
 		closedToTradingOrders: 0,
 		completionRate: 0,
-		totalChains: 0
+		totalChains: 0,
+		ordersToday: 0,
+		buyCount: 0,
+		sellCount: 0,
+		topLpName: '',
+		topLpOrderCount: 0,
+		topLpPercentage: 0
 	});
 
 	// Volume by currency state
@@ -375,6 +382,17 @@
 				value={stats.closedToTradingOrders.toLocaleString()}
 				variant="warning"
 			/>
+			<StatCard
+				label="Orders Today"
+				value={stats.ordersToday.toLocaleString()}
+				variant="default"
+			/>
+			<StatCard
+				label="Top LP Share"
+				value={stats.topLpPercentage.toFixed(1)}
+				suffix={`% (${stats.topLpName || '—'})`}
+				variant="rate"
+			/>
 		</section>
 
 		<!-- Volume by Currency -->
@@ -417,6 +435,11 @@
 				loading={orderTypeLoading}
 				error={orderTypeError}
 				onRetry={() => loadOrderTypeDistribution(false)}
+			/>
+			<BuySellRatio
+				buyCount={stats.buyCount}
+				sellCount={stats.sellCount}
+				loading={dataContext.state.loading}
 			/>
 		</section>
 
@@ -634,8 +657,14 @@
 	/* Distribution Charts */
 	.distributions-grid {
 		display: grid;
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(3, 1fr);
 		gap: 16px;
+	}
+
+	@media (max-width: 1200px) {
+		.distributions-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
 	}
 
 	@media (max-width: 768px) {
