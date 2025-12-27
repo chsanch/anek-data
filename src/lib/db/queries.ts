@@ -333,14 +333,16 @@ export async function getDashboardStats(db: AsyncDuckDB): Promise<DashboardStats
 	const conn = await db.connect();
 	try {
 		// Cast large aggregations to DOUBLE to avoid BigInt overflow issues
+		// Join with currencies to use correct minor_units per currency (default 2 if not found)
 		const result = await conn.query(`
 			SELECT
 				COUNT(*)::BIGINT as total_trades,
-				(SUM(sell_amount_cents)::DOUBLE / 100.0) as total_volume,
-				COUNT(*) FILTER (WHERE status = 'open')::BIGINT as open_orders,
-				AVG(rate)::DOUBLE as avg_rate,
-				COUNT(*) FILTER (WHERE fx_order_type = 'chain')::BIGINT as total_chains
-			FROM orders
+				SUM(o.sell_amount_cents::DOUBLE / POWER(10, COALESCE(c.minor_units, 2))) as total_volume,
+				COUNT(*) FILTER (WHERE o.status = 'open')::BIGINT as open_orders,
+				AVG(o.rate)::DOUBLE as avg_rate,
+				COUNT(*) FILTER (WHERE o.fx_order_type = 'chain')::BIGINT as total_chains
+			FROM orders o
+			LEFT JOIN currencies c ON o.sell_currency = c.code
 		`);
 
 		const row = result.toArray()[0];
@@ -379,13 +381,15 @@ export async function getVolumeByCurrency(
 ): Promise<VolumeByCurrency[]> {
 	const conn = await db.connect();
 	try {
+		// Join with currencies to use correct minor_units per currency (default 2 if not found)
 		const result = await conn.query(`
 			SELECT
-				sell_currency as currency,
-				(SUM(sell_amount_cents)::DOUBLE / 100.0) as volume,
+				o.sell_currency as currency,
+				SUM(o.sell_amount_cents::DOUBLE / POWER(10, COALESCE(c.minor_units, 2))) as volume,
 				COUNT(*)::BIGINT as order_count
-			FROM orders
-			GROUP BY sell_currency
+			FROM orders o
+			LEFT JOIN currencies c ON o.sell_currency = c.code
+			GROUP BY o.sell_currency
 			ORDER BY volume DESC
 			LIMIT ${limit}
 		`);
@@ -580,15 +584,17 @@ export async function getDailyVolume(
 ): Promise<DailyVolume[]> {
 	const conn = await db.connect();
 	try {
+		// Join with currencies to use correct minor_units per currency (default 2 if not found)
 		const result = await conn.query(`
 			SELECT
-				strftime(creation_date, '%Y-%m-%d') as time,
-				(SUM(sell_amount_cents)::DOUBLE / 100.0) as value,
+				strftime(o.creation_date, '%Y-%m-%d') as time,
+				SUM(o.sell_amount_cents::DOUBLE / POWER(10, COALESCE(c.minor_units, 2))) as value,
 				COUNT(*)::BIGINT as trade_count
-			FROM orders
-			WHERE creation_date >= DATE '${startDate}' AND creation_date <= DATE '${endDate}'
-			GROUP BY creation_date
-			ORDER BY creation_date
+			FROM orders o
+			LEFT JOIN currencies c ON o.sell_currency = c.code
+			WHERE o.creation_date >= DATE '${startDate}' AND o.creation_date <= DATE '${endDate}'
+			GROUP BY o.creation_date
+			ORDER BY o.creation_date
 		`);
 
 		return result.toArray().map((row) => ({
@@ -612,15 +618,22 @@ export async function getDailyDirectionVolume(
 ): Promise<DailyDirectionVolume[]> {
 	const conn = await db.connect();
 	try {
+		// Join with currencies for both buy and sell currencies (default 2 minor units if not found)
 		const result = await conn.query(`
 			SELECT
-				strftime(creation_date, '%Y-%m-%d') as time,
-				(SUM(CASE WHEN market_direction = 'buy' THEN buy_amount_cents ELSE 0 END)::DOUBLE / 100.0) as buy_volume,
-				(SUM(CASE WHEN market_direction = 'sell' THEN sell_amount_cents ELSE 0 END)::DOUBLE / 100.0) as sell_volume
-			FROM orders
-			WHERE creation_date >= DATE '${startDate}' AND creation_date <= DATE '${endDate}'
-			GROUP BY creation_date
-			ORDER BY creation_date
+				strftime(o.creation_date, '%Y-%m-%d') as time,
+				SUM(CASE WHEN o.market_direction = 'buy'
+					THEN o.buy_amount_cents::DOUBLE / POWER(10, COALESCE(bc.minor_units, 2))
+					ELSE 0 END) as buy_volume,
+				SUM(CASE WHEN o.market_direction = 'sell'
+					THEN o.sell_amount_cents::DOUBLE / POWER(10, COALESCE(sc.minor_units, 2))
+					ELSE 0 END) as sell_volume
+			FROM orders o
+			LEFT JOIN currencies bc ON o.buy_currency = bc.code
+			LEFT JOIN currencies sc ON o.sell_currency = sc.code
+			WHERE o.creation_date >= DATE '${startDate}' AND o.creation_date <= DATE '${endDate}'
+			GROUP BY o.creation_date
+			ORDER BY o.creation_date
 		`);
 
 		return result.toArray().map((row) => ({

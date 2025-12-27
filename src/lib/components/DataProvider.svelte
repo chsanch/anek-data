@@ -6,16 +6,19 @@
 		PUBLIC_PARQUET_URL,
 		PUBLIC_CACHE_TTL,
 		PUBLIC_ARROW_URL,
-		PUBLIC_DATA_SOURCE
+		PUBLIC_DATA_SOURCE,
+		PUBLIC_CURRENCIES_URL
 	} from '$env/static/public';
 	import { initDuckDB } from '$lib/db/duckdb';
 	import { loadParquetWithCache, validateSchema } from '$lib/db/loader';
 	import { loadArrowWithCache } from '$lib/db/arrow-loader';
+	import { loadCurrencies, createEmptyCurrencyMap } from '$lib/db/currencies';
 	import type { DataState, DataError } from '$lib/db/types';
 	import { DATA_PROVIDER_KEY } from '$lib/db/context';
 	import { ParquetCacheService } from '$lib/db/cache';
 	import { INITIAL_CACHE_STATUS } from '$lib/db/cache-types';
 	import type { CacheStatus } from '$lib/db/cache-types';
+	import type { CurrencyMap } from '$lib/types/currency';
 
 	const dataSource = PUBLIC_DATA_SOURCE || 'parquet';
 
@@ -31,6 +34,7 @@
 	let db: AsyncDuckDB | null = $state(null);
 	let cacheService: ParquetCacheService | null = $state(null);
 	let cacheStatus: CacheStatus = $state({ ...INITIAL_CACHE_STATUS });
+	let currencyMap: CurrencyMap = $state(createEmptyCurrencyMap());
 	let dataState: DataState = $state({
 		loading: true,
 		error: null,
@@ -52,6 +56,16 @@
 			if (!cacheService) {
 				cacheService = new ParquetCacheService({ ttl: cacheTtl });
 				await cacheService.init();
+			}
+
+			// Load currencies if endpoint is configured
+			if (PUBLIC_CURRENCIES_URL && db) {
+				try {
+					currencyMap = await loadCurrencies(db, PUBLIC_CURRENCIES_URL);
+				} catch (e) {
+					// Non-fatal: continue with empty currency map (will use defaults)
+					console.warn('Failed to load currencies, using defaults:', e);
+				}
 			}
 
 			if (dataSource === 'arrow') {
@@ -138,6 +152,9 @@
 		},
 		get cacheStatus() {
 			return cacheStatus;
+		},
+		get currencyMap() {
+			return currencyMap;
 		},
 		refresh,
 		forceRefresh

@@ -96,11 +96,27 @@ src/
 
 - Public env vars must be prefixed with `PUBLIC_`
 - Access via `$env/static/public` or `$env/dynamic/public`
-- Current env vars:
-  - `PUBLIC_DATA_SOURCE`: Data source type (`'arrow'` or `'parquet'`, default: `'parquet'`)
-  - `PUBLIC_PARQUET_URL`: URL to remote parquet file
-  - `PUBLIC_ARROW_URL`: URL to Arrow IPC stream endpoint (Rust server)
-  - `PUBLIC_CACHE_TTL`: Cache time-to-live in milliseconds (default: 86400000 = 24 hours)
+- See `.env.example` for a complete template
+
+### Data Source
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PUBLIC_DATA_SOURCE` | Data source type: `'parquet'` or `'arrow'` | `'parquet'` |
+| `PUBLIC_PARQUET_URL` | URL to remote parquet file | - |
+| `PUBLIC_ARROW_URL` | URL to Arrow IPC stream endpoint | - |
+
+### Currency
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PUBLIC_CURRENCIES_URL` | URL to currencies endpoint (returns `[{code, minor_units}]`) | - |
+
+### Cache
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PUBLIC_CACHE_TTL` | Cache TTL in milliseconds (0 to disable) | `86400000` (24h) |
 
 ## Testing Local Parquet Server
 
@@ -137,7 +153,27 @@ The application uses IndexedDB to cache data files (both Parquet and Arrow) for 
 - `ready`: Data loaded (from cache or network)
 - `error`: Failed to load
 
+## Currency Formatting
+
+The application supports proper currency formatting based on ISO 4217 minor units:
+
+- **Types**: `src/lib/types/currency.ts` - `Currency`, `CurrencyMap` interfaces
+- **Service**: `src/lib/db/currencies.ts` - Loads currencies into DuckDB and returns a lookup map
+- **Formatting**: `src/lib/utils/format.ts` - `formatCurrency(cents, currencyCode, currencyMap)`
+
+### Minor Units Examples
+
+| Currency | Minor Units | 1000 cents displays as |
+|----------|-------------|------------------------|
+| EUR, USD | 2 | 10.00 |
+| JPY | 0 | 1,000 |
+| KWD | 3 | 1.000 |
+
+The currency map is loaded from `PUBLIC_CURRENCIES_URL` on startup and available via `getDataContext().currencyMap`.
+
 ## Recent Changes
+
+- 006-currency-formatting: Added currency minor units support for proper amount formatting (JPY, KWD, etc.)
 
 - 005-arrow-cache: Extended IndexedDB caching to Arrow data source, smart relative timestamps in CacheIndicator, 24h default TTL
 

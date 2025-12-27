@@ -5,9 +5,12 @@
 	import { formatCurrency, formatDate } from '$lib/utils/format';
 	import { createSvelteTable, getCoreRowModel, FlexRender } from '$lib/components/table';
 	import { ORDER_COLUMNS } from '$lib/types/table';
+	import { getDataContext } from '$lib/db/context';
 	import Skeleton from './Skeleton.svelte';
 	import EmptyState from './EmptyState.svelte';
 	import PageSizeSelector from './PageSizeSelector.svelte';
+
+	const { currencyMap } = getDataContext();
 
 	interface Props {
 		orders: UnifiedOrder[];
@@ -227,11 +230,11 @@
 							</span>
 						</td>
 						<td class="cell-amount">
-							<span class="amount">{formatCurrency(order.buyAmountCents)}</span>
+							<span class="amount">{formatCurrency(order.buyAmountCents, order.buyCurrency, currencyMap)}</span>
 							<span class="currency">{order.buyCurrency}</span>
 						</td>
 						<td class="cell-amount">
-							<span class="amount">{formatCurrency(order.sellAmountCents)}</span>
+							<span class="amount">{formatCurrency(order.sellAmountCents, order.sellCurrency, currencyMap)}</span>
 							<span class="currency">{order.sellCurrency}</span>
 						</td>
 						<td class="cell-rate">{order.rate.toFixed(4)}</td>

@@ -2,11 +2,13 @@ import { getContext } from 'svelte';
 import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
 import type { DataState } from './types';
 import type { CacheStatus } from './cache-types';
+import type { CurrencyMap } from '$lib/types/currency';
 
 export interface DataProviderContext {
 	readonly db: AsyncDuckDB | null;
 	readonly state: DataState;
 	readonly cacheStatus: CacheStatus;
+	readonly currencyMap: CurrencyMap;
 	refresh: () => Promise<void>;
 	forceRefresh: () => Promise<void>;
 }
