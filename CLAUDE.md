@@ -54,6 +54,23 @@ After completing the code, ask the user if they want a playground link. Only cal
 - Use Svelte context API for sharing state across components (SSR-safe)
 - Avoid `onMount` for data fetching when possible; prefer load functions or context
 
+### $effect Best Practices
+
+- **Don't update `$state` inside `$effect`** - This can cause infinite loops and is an anti-pattern
+- Use `$effect` for side effects only (DOM manipulation, network requests, analytics)
+- For tracking external state changes, use a **non-reactive tracker variable**:
+  ```typescript
+  let tracker: Date | null = null; // NOT $state!
+
+  $effect(() => {
+    if (externalState.lastRefresh !== tracker) {
+      tracker = externalState.lastRefresh; // Update tracker (not reactive)
+      doSideEffect(); // Trigger side effects
+    }
+  });
+  ```
+- Prefer `$derived` over `$effect` when computing values from other state
+
 ### TypeScript
 
 - All code must be strictly typed
@@ -153,6 +170,26 @@ The application uses IndexedDB to cache data files (both Parquet and Arrow) for 
 - `ready`: Data loaded (from cache or network)
 - `error`: Failed to load
 
+## Refresh Architecture
+
+The application has a two-tier refresh system:
+
+### Header Refresh (CacheIndicator)
+- Calls `dataContext.forceRefresh()` - fetches new data from server
+- Bypasses IndexedDB cache, always makes network request
+- Updates `dataContext.state.lastRefresh` when complete
+- Dashboard pages react via `$effect` watching `lastRefresh`
+
+### Table/Component Refresh
+- Calls local `handleTableRefresh()` - re-queries DuckDB only
+- No network request, just invalidates query caches and reloads from existing DuckDB data
+- Fast, used for UI refreshes without fetching new server data
+
+### Query Cache (In-Memory)
+- 30-second TTL for expensive DuckDB queries (stats, distributions, trends)
+- Invalidated on any refresh (header or table)
+- See `src/lib/utils/debounce.ts` for `QueryCache` class
+
 ## Currency Formatting
 
 The application supports proper currency formatting based on ISO 4217 minor units:
@@ -172,6 +209,8 @@ The application supports proper currency formatting based on ISO 4217 minor unit
 The currency map is loaded from `PUBLIC_CURRENCIES_URL` on startup and available via `getDataContext().currencyMap`.
 
 ## Recent Changes
+
+- 007-dashboard-kpi-phase2: Dashboard KPI improvements - sparklines for 7-day trends, Orders Today, Buy/Sell ratio visualization, Top LP insight, reactive data refresh with two-tier system
 
 - 006-currency-formatting: Added currency minor units support for proper amount formatting (JPY, KWD, etc.)
 
