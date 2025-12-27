@@ -4,7 +4,7 @@
 		value: string;
 		prefix?: string;
 		suffix?: string;
-		variant?: 'default' | 'primary' | 'highlight' | 'rate';
+		variant?: 'default' | 'primary' | 'highlight' | 'rate' | 'success' | 'warning';
 	}
 
 	let { label, value, prefix, suffix, variant = 'default' }: Props = $props();
@@ -15,6 +15,8 @@
 	class:primary={variant === 'primary'}
 	class:highlight={variant === 'highlight'}
 	class:rate={variant === 'rate'}
+	class:success={variant === 'success'}
+	class:warning={variant === 'warning'}
 >
 	<span class="stat-label">{label}</span>
 	<div class="stat-value-container">
@@ -104,5 +106,23 @@
 
 	.stat-card.rate .stat-value {
 		color: var(--accent-purple);
+	}
+
+	.stat-card.success {
+		border-color: var(--accent-success);
+		background: var(--gradient-success-subtle);
+	}
+
+	.stat-card.success .stat-value {
+		color: var(--accent-success);
+	}
+
+	.stat-card.warning {
+		border-color: var(--accent-warning);
+		background: var(--gradient-warning-subtle);
+	}
+
+	.stat-card.warning .stat-value {
+		color: var(--accent-warning);
 	}
 </style>

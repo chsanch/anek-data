@@ -23,8 +23,19 @@ export interface DashboardStats {
 	totalVolume: number;
 	activeCurrencies: number;
 	openOrders: number;
-	avgRate: number;
+	completedOrders: number;
+	closedToTradingOrders: number;
+	completionRate: number;
 	totalChains: number;
+}
+
+/**
+ * Order type distribution (Forward/Chain/Spot)
+ */
+export interface OrderTypeDistribution {
+	type: 'forward' | 'chain' | 'spot';
+	count: number;
+	percentage: number;
 }
 
 /**
@@ -327,7 +338,7 @@ function toSafeNumber(value: unknown): number {
 
 /**
  * Get dashboard statistics from orders data
- * Calculates: total trades, total volume, active currencies, open orders, avg rate, total chains
+ * Calculates: total trades, total volume, status counts, completion rate, total chains
  */
 export async function getDashboardStats(db: AsyncDuckDB): Promise<DashboardStats> {
 	const conn = await db.connect();
@@ -339,7 +350,9 @@ export async function getDashboardStats(db: AsyncDuckDB): Promise<DashboardStats
 				COUNT(*)::BIGINT as total_trades,
 				SUM(o.sell_amount_cents::DOUBLE / POWER(10, COALESCE(c.minor_units, 2))) as total_volume,
 				COUNT(*) FILTER (WHERE o.status = 'open')::BIGINT as open_orders,
-				AVG(o.rate)::DOUBLE as avg_rate,
+				COUNT(*) FILTER (WHERE o.status = 'completed')::BIGINT as completed_orders,
+				COUNT(*) FILTER (WHERE o.status = 'closed_to_trading')::BIGINT as closed_to_trading_orders,
+				(COUNT(*) FILTER (WHERE o.status = 'completed') * 100.0 / NULLIF(COUNT(*), 0))::DOUBLE as completion_rate,
 				COUNT(*) FILTER (WHERE o.fx_order_type = 'chain')::BIGINT as total_chains
 			FROM orders o
 			LEFT JOIN currencies c ON o.sell_currency = c.code
@@ -363,7 +376,9 @@ export async function getDashboardStats(db: AsyncDuckDB): Promise<DashboardStats
 			totalVolume: toSafeNumber(row.total_volume),
 			activeCurrencies: uniqueCurrencies,
 			openOrders: toSafeNumber(row.open_orders),
-			avgRate: toSafeNumber(row.avg_rate),
+			completedOrders: toSafeNumber(row.completed_orders),
+			closedToTradingOrders: toSafeNumber(row.closed_to_trading_orders),
+			completionRate: toSafeNumber(row.completion_rate) || 0,
 			totalChains: toSafeNumber(row.total_chains)
 		};
 	} finally {
@@ -665,6 +680,35 @@ export async function getStatusDistribution(db: AsyncDuckDB): Promise<StatusDist
 
 		return result.toArray().map((row) => ({
 			status: String(row.status) as StatusDistribution['status'],
+			count: toSafeNumber(row.count),
+			percentage: toSafeNumber(row.percentage)
+		}));
+	} finally {
+		await conn.close();
+	}
+}
+
+/**
+ * Get order count and percentage breakdown by order type (Forward/Chain/Spot)
+ * Returns data for distribution visualization
+ */
+export async function getOrderTypeDistribution(db: AsyncDuckDB): Promise<OrderTypeDistribution[]> {
+	const conn = await db.connect();
+	try {
+		// Filter to known types in SQL so percentages are computed correctly (sum to 100%)
+		const result = await conn.query(`
+			SELECT
+				LOWER(fx_order_type) as type,
+				COUNT(*)::BIGINT as count,
+				(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER ())::DOUBLE as percentage
+			FROM orders
+			WHERE LOWER(fx_order_type) IN ('forward', 'chain', 'spot')
+			GROUP BY LOWER(fx_order_type)
+			ORDER BY count DESC
+		`);
+
+		return result.toArray().map((row) => ({
+			type: String(row.type) as OrderTypeDistribution['type'],
 			count: toSafeNumber(row.count),
 			percentage: toSafeNumber(row.percentage)
 		}));

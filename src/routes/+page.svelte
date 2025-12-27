@@ -7,6 +7,8 @@
 	import ExportModal from '$lib/components/ExportModal.svelte';
 	import ReferenceSearch from '$lib/components/ReferenceSearch.svelte';
 	import TableToolbar from '$lib/components/TableToolbar.svelte';
+	import StatusDistribution from '$lib/components/charts/StatusDistribution.svelte';
+	import OrderTypeDistribution from '$lib/components/charts/OrderTypeDistribution.svelte';
 	import type { ExportOptions } from '$lib/components/ExportModal.svelte';
 	import { formatCompact } from '$lib/utils/format';
 	import { QueryCache } from '$lib/utils/debounce';
@@ -17,6 +19,8 @@
 		getDashboardStats,
 		getVolumeByCurrency,
 		getFilterOptions,
+		getStatusDistribution,
+		getOrderTypeDistribution,
 		exportOrdersToCsv,
 		downloadCsv,
 		getExportOrderCount,
@@ -24,13 +28,17 @@
 		type VolumeByCurrency,
 		type SortConfig,
 		type ColumnFilters,
-		type FilterOptions
+		type FilterOptions,
+		type OrderTypeDistribution as OrderTypeDistributionData
 	} from '$lib/db/queries';
 	import type { UnifiedOrder } from '$lib/types/orders';
+	import type { StatusDistribution as StatusDistributionData } from '$lib/types/analytics';
 
 	// Query cache for stats (30 second TTL)
 	const statsCache = new QueryCache<DashboardStats>(30000);
 	const volumeCache = new QueryCache<VolumeByCurrency[]>(30000);
+	const statusCache = new QueryCache<StatusDistributionData[]>(30000);
+	const orderTypeCache = new QueryCache<OrderTypeDistributionData[]>(30000);
 
 	// Get data context from DataProvider
 	const dataContext = getDataContext();
@@ -67,7 +75,9 @@
 		totalVolume: 0,
 		activeCurrencies: 0,
 		openOrders: 0,
-		avgRate: 0,
+		completedOrders: 0,
+		closedToTradingOrders: 0,
+		completionRate: 0,
 		totalChains: 0
 	});
 
@@ -75,12 +85,24 @@
 	let volumeByCurrency: VolumeByCurrency[] = $state([]);
 	let volumeLoading = $state(false);
 
+	// Status distribution state
+	let statusDistribution: StatusDistributionData[] = $state([]);
+	let statusLoading = $state(false);
+	let statusError: string | null = $state(null);
+
+	// Order type distribution state
+	let orderTypeDistribution: OrderTypeDistributionData[] = $state([]);
+	let orderTypeLoading = $state(false);
+	let orderTypeError: string | null = $state(null);
+
 	// Load data when initialized
 	$effect(() => {
 		if (dataContext.state.initialized && dataContext.db) {
 			loadOrders(currentPage, pageSize, currentSort, referenceSearch, columnFilters);
 			loadStats();
 			loadVolumeByCurrency();
+			loadStatusDistribution();
+			loadOrderTypeDistribution();
 			loadFilterOptions();
 		}
 	});
@@ -199,10 +221,66 @@
 		}
 	}
 
+	async function loadStatusDistribution(useCache = true) {
+		if (!dataContext.db) return;
+
+		const cacheKey = 'status-distribution';
+		if (useCache) {
+			const cached = statusCache.get(cacheKey);
+			if (cached) {
+				statusDistribution = cached;
+				statusError = null;
+				return;
+			}
+		}
+
+		statusLoading = true;
+		statusError = null;
+		try {
+			const fetchedStatus = await getStatusDistribution(dataContext.db);
+			statusDistribution = fetchedStatus;
+			statusCache.set(cacheKey, fetchedStatus);
+		} catch (e) {
+			console.error('Failed to load status distribution:', e);
+			statusError = e instanceof Error ? e.message : 'Failed to load status distribution';
+		} finally {
+			statusLoading = false;
+		}
+	}
+
+	async function loadOrderTypeDistribution(useCache = true) {
+		if (!dataContext.db) return;
+
+		const cacheKey = 'order-type-distribution';
+		if (useCache) {
+			const cached = orderTypeCache.get(cacheKey);
+			if (cached) {
+				orderTypeDistribution = cached;
+				orderTypeError = null;
+				return;
+			}
+		}
+
+		orderTypeLoading = true;
+		orderTypeError = null;
+		try {
+			const fetchedOrderType = await getOrderTypeDistribution(dataContext.db);
+			orderTypeDistribution = fetchedOrderType;
+			orderTypeCache.set(cacheKey, fetchedOrderType);
+		} catch (e) {
+			console.error('Failed to load order type distribution:', e);
+			orderTypeError = e instanceof Error ? e.message : 'Failed to load order type distribution';
+		} finally {
+			orderTypeLoading = false;
+		}
+	}
+
 	async function handleRefresh() {
 		// Invalidate caches on refresh
 		statsCache.invalidate();
 		volumeCache.invalidate();
+		statusCache.invalidate();
+		orderTypeCache.invalidate();
 
 		await dataContext.refresh();
 		// Reset to first page on refresh and reload all data (bypassing cache)
@@ -210,6 +288,8 @@
 		loadOrders(1, pageSize, currentSort, referenceSearch, columnFilters);
 		loadStats(false);
 		loadVolumeByCurrency(false);
+		loadStatusDistribution(false);
+		loadOrderTypeDistribution(false);
 		loadFilterOptions();
 	}
 
@@ -285,12 +365,16 @@
 				variant="default"
 			/>
 			<StatCard
-				label="Avg. Rate"
-				value={stats.avgRate.toFixed(4)}
-				prefix="EUR/USD"
-				variant="rate"
+				label="Completion Rate"
+				value={stats.completionRate.toFixed(1)}
+				suffix="%"
+				variant="success"
 			/>
-			<StatCard label="Currencies" value={stats.activeCurrencies.toString()} variant="default" />
+			<StatCard
+				label="Pending Execution"
+				value={stats.closedToTradingOrders.toLocaleString()}
+				variant="warning"
+			/>
 		</section>
 
 		<!-- Volume by Currency -->
@@ -318,6 +402,22 @@
 					{/each}
 				</div>
 			{/if}
+		</section>
+
+		<!-- Distribution Charts -->
+		<section class="distributions-grid">
+			<StatusDistribution
+				data={statusDistribution}
+				loading={statusLoading}
+				error={statusError}
+				onRetry={() => loadStatusDistribution(false)}
+			/>
+			<OrderTypeDistribution
+				data={orderTypeDistribution}
+				loading={orderTypeLoading}
+				error={orderTypeError}
+				onRetry={() => loadOrderTypeDistribution(false)}
+			/>
 		</section>
 
 		<!-- Orders Table -->
@@ -529,6 +629,19 @@
 		height: 100%;
 		background: var(--gradient-bar);
 		transition: width 0.3s ease;
+	}
+
+	/* Distribution Charts */
+	.distributions-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 16px;
+	}
+
+	@media (max-width: 768px) {
+		.distributions-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	/* Orders Section */
