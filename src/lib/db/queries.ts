@@ -45,6 +45,24 @@ export interface OrderTypeDistribution {
 }
 
 /**
+ * Daily trend data point for sparkline visualization
+ */
+export interface DailyTrendPoint {
+	date: string;
+	value: number;
+}
+
+/**
+ * Daily trends for key metrics (7-day history)
+ */
+export interface DailyTrends {
+	trades: DailyTrendPoint[];
+	volume: DailyTrendPoint[];
+	openOrders: DailyTrendPoint[];
+	completionRate: DailyTrendPoint[];
+}
+
+/**
  * Volume breakdown by currency
  */
 export interface VolumeByCurrency {
@@ -415,6 +433,69 @@ export async function getDashboardStats(db: AsyncDuckDB): Promise<DashboardStats
 			topLpOrderCount,
 			topLpPercentage
 		};
+	} finally {
+		await conn.close();
+	}
+}
+
+/**
+ * Get daily trends for key metrics (7-day history)
+ * Used for sparkline visualizations in KPI cards
+ * Always returns exactly 7 data points, padding missing days with zeros
+ */
+export async function getDailyTrends(db: AsyncDuckDB): Promise<DailyTrends> {
+	const conn = await db.connect();
+	try {
+		// Generate a complete 7-day date series and left join actual data
+		// This ensures we always get 7 points even if some days have no orders
+		const result = await conn.query(`
+			WITH date_series AS (
+				SELECT CAST(d AS DATE) as order_date
+				FROM generate_series(
+					CURRENT_DATE - INTERVAL '6 days',
+					CURRENT_DATE,
+					INTERVAL '1 day'
+				) AS t(d)
+			),
+			daily_stats AS (
+				SELECT
+					CAST(o.creation_date AS DATE) as order_date,
+					COUNT(*)::BIGINT as trade_count,
+					SUM(o.sell_amount_cents::DOUBLE / POWER(10, COALESCE(c.minor_units, 2))) as volume,
+					COUNT(*) FILTER (WHERE o.status = 'open')::BIGINT as open_count,
+					(COUNT(*) FILTER (WHERE o.status = 'completed') * 100.0 / NULLIF(COUNT(*), 0))::DOUBLE as completion_rate
+				FROM orders o
+				LEFT JOIN currencies c ON o.sell_currency = c.code
+				WHERE o.creation_date >= CURRENT_DATE - INTERVAL '6 days'
+				GROUP BY CAST(o.creation_date AS DATE)
+			)
+			SELECT
+				ds.order_date,
+				COALESCE(st.trade_count, 0) as trade_count,
+				COALESCE(st.volume, 0) as volume,
+				COALESCE(st.open_count, 0) as open_count,
+				COALESCE(st.completion_rate, 0) as completion_rate
+			FROM date_series ds
+			LEFT JOIN daily_stats st ON ds.order_date = st.order_date
+			ORDER BY ds.order_date ASC
+		`);
+
+		const rows = result.toArray();
+
+		const trades: DailyTrendPoint[] = [];
+		const volume: DailyTrendPoint[] = [];
+		const openOrders: DailyTrendPoint[] = [];
+		const completionRate: DailyTrendPoint[] = [];
+
+		for (const row of rows) {
+			const date = String(row.order_date);
+			trades.push({ date, value: toSafeNumber(row.trade_count) });
+			volume.push({ date, value: toSafeNumber(row.volume) });
+			openOrders.push({ date, value: toSafeNumber(row.open_count) });
+			completionRate.push({ date, value: toSafeNumber(row.completion_rate) });
+		}
+
+		return { trades, volume, openOrders, completionRate };
 	} finally {
 		await conn.close();
 	}

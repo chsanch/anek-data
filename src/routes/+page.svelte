@@ -22,6 +22,7 @@
 		getFilterOptions,
 		getStatusDistribution,
 		getOrderTypeDistribution,
+		getDailyTrends,
 		exportOrdersToCsv,
 		downloadCsv,
 		getExportOrderCount,
@@ -30,7 +31,8 @@
 		type SortConfig,
 		type ColumnFilters,
 		type FilterOptions,
-		type OrderTypeDistribution as OrderTypeDistributionData
+		type OrderTypeDistribution as OrderTypeDistributionData,
+		type DailyTrends
 	} from '$lib/db/queries';
 	import type { UnifiedOrder } from '$lib/types/orders';
 	import type { StatusDistribution as StatusDistributionData } from '$lib/types/analytics';
@@ -40,6 +42,7 @@
 	const volumeCache = new QueryCache<VolumeByCurrency[]>(30000);
 	const statusCache = new QueryCache<StatusDistributionData[]>(30000);
 	const orderTypeCache = new QueryCache<OrderTypeDistributionData[]>(30000);
+	const trendsCache = new QueryCache<DailyTrends>(30000);
 
 	// Get data context from DataProvider
 	const dataContext = getDataContext();
@@ -102,6 +105,14 @@
 	let orderTypeLoading = $state(false);
 	let orderTypeError: string | null = $state(null);
 
+	// Daily trends state (for sparklines)
+	let trends: DailyTrends = $state({
+		trades: [],
+		volume: [],
+		openOrders: [],
+		completionRate: []
+	});
+
 	// Load data when initialized
 	$effect(() => {
 		if (dataContext.state.initialized && dataContext.db) {
@@ -109,6 +120,7 @@
 			loadStats();
 			loadVolumeByCurrency();
 			loadStatusDistribution();
+			loadTrends();
 			loadOrderTypeDistribution();
 			loadFilterOptions();
 		}
@@ -282,12 +294,34 @@
 		}
 	}
 
+	async function loadTrends(useCache = true) {
+		if (!dataContext.db) return;
+
+		const cacheKey = 'daily-trends';
+		if (useCache) {
+			const cached = trendsCache.get(cacheKey);
+			if (cached) {
+				trends = cached;
+				return;
+			}
+		}
+
+		try {
+			const fetchedTrends = await getDailyTrends(dataContext.db);
+			trends = fetchedTrends;
+			trendsCache.set(cacheKey, fetchedTrends);
+		} catch (e) {
+			console.error('Failed to load daily trends:', e);
+		}
+	}
+
 	async function handleRefresh() {
 		// Invalidate caches on refresh
 		statsCache.invalidate();
 		volumeCache.invalidate();
 		statusCache.invalidate();
 		orderTypeCache.invalidate();
+		trendsCache.invalidate();
 
 		await dataContext.refresh();
 		// Reset to first page on refresh and reload all data (bypassing cache)
@@ -297,6 +331,7 @@
 		loadVolumeByCurrency(false);
 		loadStatusDistribution(false);
 		loadOrderTypeDistribution(false);
+		loadTrends(false);
 		loadFilterOptions();
 	}
 
@@ -304,6 +339,12 @@
 	let maxVolume = $derived(
 		volumeByCurrency.length > 0 ? Math.max(...volumeByCurrency.map((v) => v.volume)) : 1
 	);
+
+	// Extract sparkline data arrays from trends
+	let tradesSparkline = $derived(trends.trades.map((t) => t.value));
+	let volumeSparkline = $derived(trends.volume.map((t) => t.value));
+	let openOrdersSparkline = $derived(trends.openOrders.map((t) => t.value));
+	let completionRateSparkline = $derived(trends.completionRate.map((t) => t.value));
 
 	// Count active filters for badge
 	let activeFilterCount = $derived(
@@ -358,14 +399,25 @@
 	<div class="main">
 		<!-- Stats Row -->
 		<section class="stats-grid">
-			<StatCard label="Total Trades" value={stats.totalTrades.toLocaleString()} variant="primary" />
+			<StatCard
+				label="Total Trades"
+				value={stats.totalTrades.toLocaleString()}
+				variant="primary"
+				sparklineData={tradesSparkline}
+			/>
 			<StatCard
 				label="Total Volume"
 				value={formatCompact(stats.totalVolume)}
 				suffix="EUR"
 				variant="default"
+				sparklineData={volumeSparkline}
 			/>
-			<StatCard label="Open Orders" value={stats.openOrders.toLocaleString()} variant="highlight" />
+			<StatCard
+				label="Open Orders"
+				value={stats.openOrders.toLocaleString()}
+				variant="highlight"
+				sparklineData={openOrdersSparkline}
+			/>
 			<StatCard
 				label="Active Chains"
 				value={stats.totalChains.toLocaleString()}
@@ -376,6 +428,7 @@
 				value={stats.completionRate.toFixed(1)}
 				suffix="%"
 				variant="success"
+				sparklineData={completionRateSparkline}
 			/>
 			<StatCard
 				label="Pending Execution"

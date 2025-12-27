@@ -1,13 +1,50 @@
 <script lang="ts">
+	import Sparkline from './Sparkline.svelte';
+
 	interface Props {
 		label: string;
 		value: string;
 		prefix?: string;
 		suffix?: string;
 		variant?: 'default' | 'primary' | 'highlight' | 'rate' | 'success' | 'warning';
+		sparklineData?: number[];
 	}
 
-	let { label, value, prefix, suffix, variant = 'default' }: Props = $props();
+	let { label, value, prefix, suffix, variant = 'default', sparklineData }: Props = $props();
+
+	// Get sparkline stroke color based on variant
+	function getSparklineColor(): string {
+		switch (variant) {
+			case 'primary':
+				return 'var(--accent-primary)';
+			case 'highlight':
+			case 'warning':
+				return 'var(--accent-warning)';
+			case 'rate':
+				return 'var(--accent-purple)';
+			case 'success':
+				return 'var(--accent-success)';
+			default:
+				return 'var(--accent-primary)';
+		}
+	}
+
+	// Get sparkline fill color based on variant (for gradient)
+	function getSparklineFillColor(): string {
+		switch (variant) {
+			case 'primary':
+				return 'var(--accent-primary-muted)';
+			case 'highlight':
+			case 'warning':
+				return 'var(--accent-warning-muted)';
+			case 'rate':
+				return 'var(--accent-purple-muted)';
+			case 'success':
+				return 'var(--accent-success-muted)';
+			default:
+				return 'var(--accent-primary-muted)';
+		}
+	}
 </script>
 
 <div
@@ -17,6 +54,7 @@
 	class:rate={variant === 'rate'}
 	class:success={variant === 'success'}
 	class:warning={variant === 'warning'}
+	class:has-sparkline={sparklineData && sparklineData.length >= 2}
 >
 	<span class="stat-label">{label}</span>
 	<div class="stat-value-container">
@@ -28,6 +66,17 @@
 			<span class="stat-suffix">{suffix}</span>
 		{/if}
 	</div>
+	{#if sparklineData && sparklineData.length >= 2}
+		<div class="sparkline-container">
+			<Sparkline
+				data={sparklineData}
+				width={100}
+				height={20}
+				strokeColor={getSparklineColor()}
+				fillColor={getSparklineFillColor()}
+			/>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -124,5 +173,13 @@
 
 	.stat-card.warning .stat-value {
 		color: var(--accent-warning);
+	}
+
+	.sparkline-container {
+		margin-top: 4px;
+	}
+
+	.stat-card.has-sparkline {
+		gap: 4px;
 	}
 </style>
