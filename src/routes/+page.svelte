@@ -113,18 +113,46 @@
 		completionRate: []
 	});
 
-	// Load data when initialized
+	// Track last refresh to detect when new data is loaded (not reactive - just a tracker)
+	let lastKnownRefresh: Date | null = null;
+
+	// Load data when DuckDB is initialized OR when data is refreshed from server
+	// This effect reacts to dataContext.state.lastRefresh changes (e.g., from AppHeader refresh)
 	$effect(() => {
 		if (dataContext.state.initialized && dataContext.db) {
-			loadOrders(currentPage, pageSize, currentSort, referenceSearch, columnFilters);
-			loadStats();
-			loadVolumeByCurrency();
-			loadStatusDistribution();
-			loadTrends();
-			loadOrderTypeDistribution();
-			loadFilterOptions();
+			const currentRefresh = dataContext.state.lastRefresh;
+			const isNewRefresh = currentRefresh !== lastKnownRefresh;
+
+			if (isNewRefresh) {
+				lastKnownRefresh = currentRefresh; // Update tracker (not $state, so no reactivity loop)
+
+				// Invalidate caches and reload all data from DuckDB
+				invalidateAllCaches();
+				currentPage = 1;
+				loadAllDashboardData();
+			}
 		}
 	});
+
+	// Centralized function to load all dashboard data
+	function loadAllDashboardData() {
+		loadOrders(currentPage, pageSize, currentSort, referenceSearch, columnFilters);
+		loadStats();
+		loadVolumeByCurrency();
+		loadStatusDistribution();
+		loadTrends();
+		loadOrderTypeDistribution();
+		loadFilterOptions();
+	}
+
+	// Invalidate all query caches
+	function invalidateAllCaches() {
+		statsCache.invalidate();
+		volumeCache.invalidate();
+		statusCache.invalidate();
+		orderTypeCache.invalidate();
+		trendsCache.invalidate();
+	}
 
 	async function loadOrders(
 		page: number,
@@ -315,24 +343,12 @@
 		}
 	}
 
-	async function handleRefresh() {
-		// Invalidate caches on refresh
-		statsCache.invalidate();
-		volumeCache.invalidate();
-		statusCache.invalidate();
-		orderTypeCache.invalidate();
-		trendsCache.invalidate();
-
-		await dataContext.refresh();
-		// Reset to first page on refresh and reload all data (bypassing cache)
+	function handleTableRefresh() {
+		// Re-query DuckDB with current data (no server fetch)
+		// Use this for quick table refresh without fetching new data from server
+		invalidateAllCaches();
 		currentPage = 1;
-		loadOrders(1, pageSize, currentSort, referenceSearch, columnFilters);
-		loadStats(false);
-		loadVolumeByCurrency(false);
-		loadStatusDistribution(false);
-		loadOrderTypeDistribution(false);
-		loadTrends(false);
-		loadFilterOptions();
+		loadAllDashboardData();
 	}
 
 	// Calculate max volume for bar chart scaling
@@ -504,7 +520,7 @@
 					<ReferenceSearch value={referenceSearch} onChange={handleReferenceSearchChange} />
 				</div>
 				<div class="section-actions">
-					<RefreshButton onclick={handleRefresh} loading={dataContext.state.loading} />
+					<RefreshButton onclick={handleTableRefresh} loading={dataContext.state.loading} />
 					<button
 						class="btn-filter"
 						class:active={showFilters || activeFilterCount > 0}
@@ -537,7 +553,7 @@
 				</div>
 			{:else if dataContext.state.error}
 				<div class="orders-error">
-					<ErrorMessage error={dataContext.state.error} onRetry={handleRefresh} />
+					<ErrorMessage error={dataContext.state.error} onRetry={dataContext.forceRefresh} />
 				</div>
 			{:else}
 				<OrdersTable
