@@ -351,9 +351,12 @@
 		loadAllDashboardData();
 	}
 
-	// Calculate max volume for bar chart scaling
-	let maxVolume = $derived(
-		volumeByCurrency.length > 0 ? Math.max(...volumeByCurrency.map((v) => v.volume)) : 1
+	// Calculate max and total EUR volume for bar chart scaling and percentages
+	let maxVolumeEur = $derived(
+		volumeByCurrency.length > 0 ? Math.max(...volumeByCurrency.map((v) => v.volumeEur)) : 1
+	);
+	let totalVolumeEur = $derived(
+		volumeByCurrency.length > 0 ? volumeByCurrency.reduce((sum, v) => sum + v.volumeEur, 0) : 1
 	);
 
 	// Extract sparkline data arrays from trends
@@ -475,15 +478,18 @@
 				<div class="volume-empty">No volume data available</div>
 			{:else}
 				<div class="currency-grid">
-					{#each volumeByCurrency as { currency, volume, orderCount } (currency)}
+					{#each volumeByCurrency as { currency, volumeEur, orderCount } (currency)}
 						<div class="currency-card">
 							<div class="currency-header">
 								<span class="currency-code">{currency}</span>
-								<span class="currency-orders">{orderCount.toLocaleString()} orders</span>
 							</div>
-							<div class="currency-volume">{formatCompact(volume)}</div>
+							<div class="currency-percentage">{((volumeEur / totalVolumeEur) * 100).toFixed(1)}%</div>
 							<div class="currency-bar">
-								<div class="currency-bar-fill" style="width: {(volume / maxVolume) * 100}%"></div>
+								<div class="currency-bar-fill" style="width: {(volumeEur / maxVolumeEur) * 100}%"></div>
+							</div>
+							<div class="currency-meta">
+								<span class="currency-volume">€{formatCompact(volumeEur)}</span>
+								<span class="currency-orders">{orderCount.toLocaleString()} orders</span>
 							</div>
 						</div>
 					{/each}
@@ -673,17 +679,54 @@
 	}
 
 	.currency-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 8px;
+		margin-bottom: 4px;
 	}
 
 	.currency-code {
 		font-family: 'IBM Plex Mono', monospace;
 		font-weight: 600;
-		font-size: 14px;
+		font-size: 13px;
+		color: var(--text-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.currency-percentage {
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 28px;
+		font-weight: 700;
 		color: var(--text-white);
+		line-height: 1.1;
+		margin-bottom: 12px;
+	}
+
+	.currency-bar {
+		height: 8px;
+		background: var(--border-primary);
+		overflow: hidden;
+		border-radius: 4px;
+		margin-bottom: 12px;
+	}
+
+	.currency-bar-fill {
+		height: 100%;
+		background: var(--gradient-bar);
+		transition: width 0.3s ease;
+		border-radius: 4px;
+	}
+
+	.currency-meta {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: 8px;
+	}
+
+	.currency-volume {
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--text-primary);
 	}
 
 	.currency-orders {
@@ -701,26 +744,6 @@
 		padding: 32px;
 		color: var(--text-muted);
 		font-size: 14px;
-	}
-
-	.currency-volume {
-		font-family: 'IBM Plex Mono', monospace;
-		font-size: 20px;
-		font-weight: 600;
-		color: var(--text-primary);
-		margin-bottom: 12px;
-	}
-
-	.currency-bar {
-		height: 3px;
-		background: var(--border-primary);
-		overflow: hidden;
-	}
-
-	.currency-bar-fill {
-		height: 100%;
-		background: var(--gradient-bar);
-		transition: width 0.3s ease;
 	}
 
 	/* Distribution Charts */

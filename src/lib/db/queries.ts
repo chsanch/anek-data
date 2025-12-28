@@ -67,7 +67,8 @@ export interface DailyTrends {
  */
 export interface VolumeByCurrency {
 	currency: string;
-	volume: number;
+	volume: number; // Native currency volume (for display)
+	volumeEur: number; // EUR-normalised volume (for comparison/percentages)
 	orderCount: number;
 }
 
@@ -173,6 +174,7 @@ export async function getPaginatedOrders(
 				market_direction,
 				buy_amount_cents,
 				sell_amount_cents,
+				normalised_amount_cents,
 				buy_currency,
 				sell_currency,
 				rate,
@@ -270,6 +272,7 @@ export async function getAllOrders(db: AsyncDuckDB): Promise<UnifiedOrder[]> {
 				market_direction,
 				buy_amount_cents,
 				sell_amount_cents,
+				normalised_amount_cents,
 				buy_currency,
 				sell_currency,
 				rate,
@@ -300,6 +303,7 @@ function mapRowToOrder(row: Record<string, unknown>): UnifiedOrder {
 		marketDirection: String(row.market_direction) as UnifiedOrder['marketDirection'],
 		buyAmountCents: Number(row.buy_amount_cents),
 		sellAmountCents: Number(row.sell_amount_cents),
+		normalisedAmountCents: Number(row.normalised_amount_cents),
 		buyCurrency: String(row.buy_currency),
 		sellCurrency: String(row.sell_currency),
 		rate: Number(row.rate),
@@ -503,7 +507,7 @@ export async function getDailyTrends(db: AsyncDuckDB): Promise<DailyTrends> {
 
 /**
  * Get volume breakdown by sell currency
- * Returns top currencies by volume, sorted descending
+ * Returns top currencies by EUR-normalised volume, sorted descending
  */
 export async function getVolumeByCurrency(
 	db: AsyncDuckDB,
@@ -511,22 +515,25 @@ export async function getVolumeByCurrency(
 ): Promise<VolumeByCurrency[]> {
 	const conn = await db.connect();
 	try {
-		// Join with currencies to use correct minor_units per currency (default 2 if not found)
+		// Use normalised_amount_cents for accurate EUR-equivalent comparison
+		// Also calculate native volume for display purposes
 		const result = await conn.query(`
 			SELECT
 				o.sell_currency as currency,
 				SUM(o.sell_amount_cents::DOUBLE / POWER(10, COALESCE(c.minor_units, 2))) as volume,
+				SUM(o.normalised_amount_cents::DOUBLE / 100.0) as volume_eur,
 				COUNT(*)::BIGINT as order_count
 			FROM orders o
 			LEFT JOIN currencies c ON o.sell_currency = c.code
 			GROUP BY o.sell_currency
-			ORDER BY volume DESC
+			ORDER BY volume_eur DESC
 			LIMIT ${limit}
 		`);
 
 		return result.toArray().map((row) => ({
 			currency: String(row.currency),
 			volume: toSafeNumber(row.volume),
+			volumeEur: toSafeNumber(row.volume_eur),
 			orderCount: toSafeNumber(row.order_count)
 		}));
 	} finally {
@@ -611,6 +618,7 @@ export async function exportOrdersToCsv(
 				market_direction,
 				buy_amount_cents,
 				sell_amount_cents,
+				normalised_amount_cents,
 				buy_currency,
 				sell_currency,
 				rate,
@@ -634,6 +642,7 @@ export async function exportOrdersToCsv(
 			'market_direction',
 			'buy_amount_cents',
 			'sell_amount_cents',
+			'normalised_amount_cents',
 			'buy_currency',
 			'sell_currency',
 			'rate',

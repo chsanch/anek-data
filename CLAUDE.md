@@ -208,7 +208,36 @@ The application supports proper currency formatting based on ISO 4217 minor unit
 
 The currency map is loaded from `PUBLIC_CURRENCIES_URL` on startup and available via `getDataContext().currencyMap`.
 
+## Normalised Amounts
+
+Order volumes are normalized to EUR for accurate cross-currency comparison:
+
+- **Field**: `normalisedAmountCents` on `UnifiedOrder` - EUR-equivalent value at order creation time
+- **Database column**: `normalised_amount_cents BIGINT` - stored in cents
+- **Usage**: Volume by Currency KPI uses this for accurate percentage calculations
+- **Documentation**: `docs/normalised-volume-feature.md`
+
+### Why Normalize?
+
+Raw currency amounts are misleading (77T JPY ≠ 77T EUR). Normalizing to EUR allows:
+- Accurate volume comparison across currencies
+- Meaningful percentage breakdowns
+- Proper sorting by economic value
+
+### Query Example
+
+```sql
+SELECT
+    sell_currency as currency,
+    SUM(normalised_amount_cents / 100.0) as volume_eur
+FROM orders
+GROUP BY sell_currency
+ORDER BY volume_eur DESC
+```
+
 ## Recent Changes
+
+- 008-normalised-volume: EUR-normalized amounts for accurate cross-currency volume comparison, enhanced Volume by Currency KPI with percentages and thicker bars, schema validation for Arrow loads
 
 - 007-dashboard-kpi-phase2: Dashboard KPI improvements - sparklines for 7-day trends, Orders Today, Buy/Sell ratio visualization, Top LP insight, reactive data refresh with two-tier system
 

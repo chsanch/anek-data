@@ -5,6 +5,7 @@ export interface UnifiedOrder {
 	marketDirection: 'buy' | 'sell';
 	buyAmountCents: number;
 	sellAmountCents: number;
+	normalisedAmountCents: number; // Transaction value in EUR cents (at order creation time)
 	buyCurrency: string;
 	sellCurrency: string;
 	rate: number;

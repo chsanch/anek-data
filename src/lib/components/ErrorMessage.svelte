@@ -11,6 +11,7 @@
 	const errorIcons: Record<DataError['type'], string> = {
 		network: '🌐',
 		parse: '📄',
+		schema: '📋',
 		memory: '💾',
 		query: '🔍'
 	};
@@ -18,6 +19,7 @@
 	const errorTitles: Record<DataError['type'], string> = {
 		network: 'Network Error',
 		parse: 'Data Error',
+		schema: 'Schema Error',
 		memory: 'Memory Error',
 		query: 'Query Error'
 	};

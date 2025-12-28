@@ -5,6 +5,7 @@
 export type DataError =
 	| { type: 'network'; message: string; details?: string }
 	| { type: 'parse'; message: string; details?: string }
+	| { type: 'schema'; message: string; details?: string }
 	| { type: 'memory'; message: string; details?: string }
 	| { type: 'query'; message: string; details?: string };
 

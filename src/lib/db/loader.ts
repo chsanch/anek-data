@@ -10,6 +10,7 @@ const EXPECTED_COLUMNS = [
 	'market_direction',
 	'buy_amount_cents',
 	'sell_amount_cents',
+	'normalised_amount_cents',
 	'buy_currency',
 	'sell_currency',
 	'rate',
@@ -23,6 +24,10 @@ const EXPECTED_COLUMNS = [
 /**
  * Load a Parquet file from a URL into DuckDB
  * Creates or replaces the 'orders' table with the data
+ *
+ * @note This is a low-level loader without caching or schema validation.
+ * For production use, prefer {@link loadParquetWithCache} via DataProvider,
+ * which handles caching and validates the schema after loading.
  */
 export async function loadParquetFromUrl(db: AsyncDuckDB, url: string): Promise<void> {
 	// Fetch the parquet file

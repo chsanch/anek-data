@@ -81,7 +81,7 @@
 				const missingColumns = await validateSchema(db);
 				if (missingColumns.length > 0) {
 					const error: DataError = {
-						type: 'parse',
+						type: 'schema',
 						message: 'Arrow data is missing required columns',
 						details: `Missing: ${missingColumns.join(', ')}`
 					};
@@ -103,7 +103,7 @@
 				const missingColumns = await validateSchema(db);
 				if (missingColumns.length > 0) {
 					const error: DataError = {
-						type: 'parse',
+						type: 'schema',
 						message: 'Parquet file is missing required columns',
 						details: `Missing: ${missingColumns.join(', ')}`
 					};

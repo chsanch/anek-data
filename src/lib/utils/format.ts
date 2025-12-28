@@ -54,12 +54,18 @@ export function centsToValue(cents: number, currencyCode: string, currencyMap: C
 
 /**
  * Format large numbers in compact notation (K, M, B)
+ * Uses Intl.NumberFormat for clean, localized output
+ *
+ * @example
+ * formatCompact(75818480000) → "75.8B"
+ * formatCompact(4939540000) → "4.9B"
+ * formatCompact(1496150) → "1.5M"
  */
-export function formatCompact(value: number): string {
-	if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
-	if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
-	if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-	return value.toString();
+export function formatCompact(value: number, maximumFractionDigits: number = 1): string {
+	return new Intl.NumberFormat('en', {
+		notation: 'compact',
+		maximumFractionDigits
+	}).format(value);
 }
 
 /**

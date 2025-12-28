@@ -6,6 +6,10 @@ import type { LoadResult } from './cache-types';
 /**
  * Load Arrow IPC stream data from a URL into DuckDB
  * Fetches Arrow data, converts to rows, and inserts into DuckDB table
+ *
+ * @note This is a low-level loader without caching or schema validation.
+ * For production use, prefer {@link loadArrowWithCache} via DataProvider,
+ * which handles caching and validates the schema after loading.
  */
 export async function loadArrowFromUrl(
 	db: AsyncDuckDB,
