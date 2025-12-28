@@ -3,10 +3,10 @@ import type { DBSchema } from 'idb';
 /**
  * Stored cache entry in IndexedDB
  */
-export interface CachedParquet {
-	/** Source URL of the parquet file (primary key) */
+export interface CachedData {
+	/** Source URL of the data file (primary key) */
 	url: string;
-	/** Raw parquet file binary data */
+	/** Raw binary data (Arrow IPC stream) */
 	data: ArrayBuffer;
 	/** Unix timestamp (ms) when cached */
 	timestamp: number;
@@ -56,7 +56,7 @@ export interface CacheConfig {
 	ttl?: number;
 	/** IndexedDB database name (default: 'anec-data-cache') */
 	dbName?: string;
-	/** Object store name (default: 'parquet-cache') */
+	/** Object store name (default: 'data-cache') */
 	storeName?: string;
 }
 
@@ -64,7 +64,7 @@ export interface CacheConfig {
  * Result of loading data (either from cache or network)
  */
 export interface LoadResult {
-	/** The parquet data buffer */
+	/** The data buffer (Arrow IPC stream) */
 	data: ArrayBuffer;
 	/** Whether data came from cache */
 	fromCache: boolean;
@@ -73,12 +73,12 @@ export interface LoadResult {
 }
 
 /**
- * IndexedDB schema for parquet cache
+ * IndexedDB schema for data cache
  */
-export interface ParquetCacheDB extends DBSchema {
-	'parquet-cache': {
+export interface DataCacheDB extends DBSchema {
+	'data-cache': {
 		key: string;
-		value: CachedParquet;
+		value: CachedData;
 	};
 }
 
@@ -88,7 +88,7 @@ export interface ParquetCacheDB extends DBSchema {
 export const DEFAULT_CACHE_CONFIG = {
 	ttl: 60 * 60 * 1000, // 1 hour
 	dbName: 'anec-data-cache',
-	storeName: 'parquet-cache'
+	storeName: 'data-cache'
 } as const;
 
 /**

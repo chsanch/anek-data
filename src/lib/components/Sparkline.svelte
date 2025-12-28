@@ -84,11 +84,26 @@
 		<path d={pathData.area} fill="url(#{gradientId})" />
 
 		<!-- Line -->
-		<path d={pathData.line} fill="none" stroke={strokeColor} stroke-width={strokeWidth} stroke-linecap="round" stroke-linejoin="round" />
+		<path
+			d={pathData.line}
+			fill="none"
+			stroke={strokeColor}
+			stroke-width={strokeWidth}
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		/>
 	</svg>
 {:else}
 	<svg {width} {height} class="sparkline empty">
-		<line x1="4" y1={height / 2} x2={width - 4} y2={height / 2} stroke="var(--border-primary)" stroke-width="1" stroke-dasharray="2,2" />
+		<line
+			x1="4"
+			y1={height / 2}
+			x2={width - 4}
+			y2={height / 2}
+			stroke="var(--border-primary)"
+			stroke-width="1"
+			stroke-dasharray="2,2"
+		/>
 	</svg>
 {/if}
 

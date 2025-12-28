@@ -12,23 +12,22 @@ pnpm dev
 ## Setup
 
 1. Copy `.env.example` to `.env`
-2. Configure `PUBLIC_PARQUET_URL` with your parquet file URL
+2. Configure `PUBLIC_ARROW_URL` with your Arrow IPC stream endpoint
 
-### Local Development with Sample Data
+### Environment Variables
 
-Generate and serve sample data (see [sample-data/README.md](sample-data/README.md)):
+| Variable                | Description                                         |
+| ----------------------- | --------------------------------------------------- |
+| `PUBLIC_ARROW_URL`      | URL to Arrow IPC stream endpoint (required)         |
+| `PUBLIC_CURRENCIES_URL` | URL to currencies endpoint for minor units lookup   |
+| `PUBLIC_CACHE_TTL`      | Cache TTL in milliseconds (default: 86400000 = 24h) |
 
-```bash
-cd sample-data
-pip install pandas pyarrow
-python generate_sample_data.py
-python serve.py
-```
-
-Then set in `.env`:
+### Example `.env`
 
 ```bash
-PUBLIC_PARQUET_URL=http://localhost:8080/orders.parquet
+PUBLIC_ARROW_URL=http://localhost:3000/arrow
+PUBLIC_CURRENCIES_URL=http://localhost:3000/currencies
+PUBLIC_CACHE_TTL=86400000
 ```
 
 ## Scripts

@@ -3,6 +3,7 @@
 ## Current State
 
 The "Volume by Currency" section displays the top 5 currencies by trading volume:
+
 - **Layout**: 5 horizontal cards in a row
 - **Metrics per card**: Currency code, order count, volume (with "B" suffix), thin progress bar
 - **Visual style**: Clean, minimal, consistent with dashboard's dark theme
@@ -18,25 +19,25 @@ The "Volume by Currency" section displays the top 5 currencies by trading volume
 
 Common patterns in FX/trading dashboards (Bloomberg, Refinitiv, TradingView):
 
-| Pattern | Use Case | Pros | Cons |
-|---------|----------|------|------|
-| Horizontal bar chart | Ranking comparison | Clear visual hierarchy, scannable | Takes vertical space |
-| Stacked bar / 100% bar | Part-of-whole | Shows composition at a glance | Hard to read exact values |
-| Treemap | Many currencies | Efficient space use | Less precise |
-| Sorted table | Detailed data | Sortable, precise | Less visual impact |
-| Donut/Pie | Few categories (5-7) | Intuitive percentages | Poor for close values |
+| Pattern                | Use Case             | Pros                              | Cons                      |
+| ---------------------- | -------------------- | --------------------------------- | ------------------------- |
+| Horizontal bar chart   | Ranking comparison   | Clear visual hierarchy, scannable | Takes vertical space      |
+| Stacked bar / 100% bar | Part-of-whole        | Shows composition at a glance     | Hard to read exact values |
+| Treemap                | Many currencies      | Efficient space use               | Less precise              |
+| Sorted table           | Detailed data        | Sortable, precise                 | Less visual impact        |
+| Donut/Pie              | Few categories (5-7) | Intuitive percentages             | Poor for close values     |
 
 **Conclusion**: For top 5 currencies, enhanced cards with percentage bars or horizontal bar charts work best.
 
 ## Recommended Metrics
 
-| Metric | Priority | Rationale |
-|--------|----------|-----------|
-| **% of Total** | Essential | Immediately communicates dominance |
-| **Volume (compact)** | Essential | Core metric, properly formatted |
-| **Order count** | Keep | Shows activity level |
-| **Trend indicator** | Future | Shows momentum vs previous period |
-| **Avg order size** | Future | Volume ÷ Orders reveals trade patterns |
+| Metric               | Priority  | Rationale                              |
+| -------------------- | --------- | -------------------------------------- |
+| **% of Total**       | Essential | Immediately communicates dominance     |
+| **Volume (compact)** | Essential | Core metric, properly formatted        |
+| **Order count**      | Keep      | Shows activity level                   |
+| **Trend indicator**  | Future    | Shows momentum vs previous period      |
+| **Avg order size**   | Future    | Volume ÷ Orders reveals trade patterns |
 
 ## Design Options Considered
 
@@ -53,6 +54,7 @@ Common patterns in FX/trading dashboards (Bloomberg, Refinitiv, TradingView):
 ```
 
 **Changes**:
+
 - Add percentage prominently (larger than order count)
 - Make progress bar thicker (8-12px instead of 3px)
 - Show volume in clean compact format (75.8B not 75818.48B)
@@ -100,10 +102,10 @@ Add 7-day trend sparklines to each currency card to show momentum.
 
 ```typescript
 function formatVolume(value: number): string {
-  return new Intl.NumberFormat('en', {
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(value);
+	return new Intl.NumberFormat('en', {
+		notation: 'compact',
+		maximumFractionDigits: 1
+	}).format(value);
 }
 
 // Examples:

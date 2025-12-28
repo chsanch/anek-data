@@ -454,11 +454,7 @@
 				value={stats.closedToTradingOrders.toLocaleString()}
 				variant="warning"
 			/>
-			<StatCard
-				label="Orders Today"
-				value={stats.ordersToday.toLocaleString()}
-				variant="default"
-			/>
+			<StatCard label="Orders Today" value={stats.ordersToday.toLocaleString()} variant="default" />
 			<StatCard
 				label="Top LP Share"
 				value={stats.topLpPercentage.toFixed(1)}
@@ -483,9 +479,14 @@
 							<div class="currency-header">
 								<span class="currency-code">{currency}</span>
 							</div>
-							<div class="currency-percentage">{((volumeEur / totalVolumeEur) * 100).toFixed(1)}%</div>
+							<div class="currency-percentage">
+								{((volumeEur / totalVolumeEur) * 100).toFixed(1)}%
+							</div>
 							<div class="currency-bar">
-								<div class="currency-bar-fill" style="width: {(volumeEur / maxVolumeEur) * 100}%"></div>
+								<div
+									class="currency-bar-fill"
+									style="width: {(volumeEur / maxVolumeEur) * 100}%"
+								></div>
 							</div>
 							<div class="currency-meta">
 								<span class="currency-volume">€{formatCompact(volumeEur)}</span>
@@ -555,7 +556,7 @@
 			{/if}
 			{#if dataContext.state.loading && !dataContext.state.initialized}
 				<div class="orders-loading">
-					<LoadingIndicator message="Loading orders from parquet file..." />
+					<LoadingIndicator message="Loading orders..." />
 				</div>
 			{:else if dataContext.state.error}
 				<div class="orders-error">

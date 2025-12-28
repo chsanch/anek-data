@@ -173,7 +173,7 @@
 		</thead>
 		<tbody>
 			{#if loading}
-				{#each Array(5) as _, i (i)}
+				{#each [0, 1, 2, 3, 4] as i (i)}
 					<tr class="skeleton-row">
 						<td><Skeleton width="100px" height="14px" /></td>
 						<td><Skeleton width="60px" height="22px" /></td>
@@ -230,11 +230,15 @@
 							</span>
 						</td>
 						<td class="cell-amount">
-							<span class="amount">{formatCurrency(order.buyAmountCents, order.buyCurrency, currencyMap)}</span>
+							<span class="amount"
+								>{formatCurrency(order.buyAmountCents, order.buyCurrency, currencyMap)}</span
+							>
 							<span class="currency">{order.buyCurrency}</span>
 						</td>
 						<td class="cell-amount">
-							<span class="amount">{formatCurrency(order.sellAmountCents, order.sellCurrency, currencyMap)}</span>
+							<span class="amount"
+								>{formatCurrency(order.sellAmountCents, order.sellCurrency, currencyMap)}</span
+							>
 							<span class="currency">{order.sellCurrency}</span>
 						</td>
 						<td class="cell-rate">{order.rate.toFixed(4)}</td>

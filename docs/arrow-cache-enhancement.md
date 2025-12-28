@@ -28,6 +28,7 @@ Fetch from http://localhost:8888/entries ──► Load into DuckDB (again!)
 ```
 
 **Issues:**
+
 1. No caching for Arrow data source
 2. Data re-fetched on every page load
 3. CacheIndicator shows "Idle" instead of meaningful status
@@ -67,11 +68,11 @@ User opens app (Arrow mode)
 
 ```typescript
 export async function loadArrowWithCache(
-  db: AsyncDuckDB,
-  url: string,
-  cacheService: ParquetCacheService,
-  options?: { forceRefresh?: boolean }
-): Promise<LoadResult>
+	db: AsyncDuckDB,
+	url: string,
+	cacheService: ParquetCacheService,
+	options?: { forceRefresh?: boolean }
+): Promise<LoadResult>;
 ```
 
 - Reuses the `ParquetCacheService` for caching Arrow data
@@ -105,19 +106,21 @@ async loadData(
 
 **Enhanced:** Better timestamp and status display
 
-| Before | After |
-|--------|-------|
-| "Idle" | "Cached" / "Synced" |
-| "10:30 AM" | "5m ago" / "Dec 26, 14:30" |
+| Before        | After                         |
+| ------------- | ----------------------------- |
+| "Idle"        | "Cached" / "Synced"           |
+| "10:30 AM"    | "5m ago" / "Dec 26, 14:30"    |
 | Blue dot only | Cyan (cached) / Green (fresh) |
 
 **Smart timestamp formatting:**
+
 - Under 1 hour: `5m ago`, `just now`
 - Under 24 hours: `3h ago`
 - Older: `Dec 26, 14:30`
 - Different year: `Dec 26 '24, 14:30`
 
 **Visual state colors:**
+
 - **Cyan** - Data loaded from cache
 - **Green** - Fresh data from network
 - **Amber** - Stale data / Loading
@@ -152,12 +155,12 @@ Both Parquet and Arrow data are stored in the same IndexedDB database:
 
 ```typescript
 interface CachedData {
-  url: string;           // "http://localhost:8888/entries"
-  data: ArrayBuffer;     // Arrow IPC stream binary
-  timestamp: number;     // When downloaded
-  expiresAt: number;     // TTL expiration
-  fileSize: number;      // For display
-  etag: string | null;   // Server ETag (if available)
+	url: string; // "http://localhost:8888/entries"
+	data: ArrayBuffer; // Arrow IPC stream binary
+	timestamp: number; // When downloaded
+	expiresAt: number; // TTL expiration
+	fileSize: number; // For display
+	etag: string | null; // Server ETag (if available)
 }
 ```
 
@@ -189,12 +192,12 @@ interface CachedData {
 
 ## Files Changed
 
-| File | Change Type |
-|------|-------------|
-| `src/lib/db/arrow-loader.ts` | Added `loadArrowWithCache()` |
-| `src/lib/db/cache.ts` | Added `fetchOptions` parameter |
-| `src/lib/components/DataProvider.svelte` | Unified cache for both sources |
-| `src/lib/components/CacheIndicator.svelte` | Enhanced UI display |
+| File                                       | Change Type                    |
+| ------------------------------------------ | ------------------------------ |
+| `src/lib/db/arrow-loader.ts`               | Added `loadArrowWithCache()`   |
+| `src/lib/db/cache.ts`                      | Added `fetchOptions` parameter |
+| `src/lib/components/DataProvider.svelte`   | Unified cache for both sources |
+| `src/lib/components/CacheIndicator.svelte` | Enhanced UI display            |
 
 ---
 

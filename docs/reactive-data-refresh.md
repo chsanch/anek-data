@@ -3,6 +3,7 @@
 ## Problem
 
 The application has two refresh mechanisms:
+
 1. **Header refresh** (CacheIndicator) - Fetches new data from the server
 2. **Table refresh** (RefreshButton) - Should just re-query existing DuckDB data
 
@@ -12,10 +13,10 @@ Previously, clicking the header refresh would fetch new data into DuckDB, but th
 
 ### Two Refresh Behaviors
 
-| Button | Location | Behavior | Network Request |
-|--------|----------|----------|-----------------|
-| Header refresh | AppHeader (CacheIndicator) | Fetch new data from server | Yes |
-| Table refresh | Orders section | Re-query DuckDB | No |
+| Button         | Location                   | Behavior                   | Network Request |
+| -------------- | -------------------------- | -------------------------- | --------------- |
+| Header refresh | AppHeader (CacheIndicator) | Fetch new data from server | Yes             |
+| Table refresh  | Orders section             | Re-query DuckDB            | No              |
 
 ### Implementation
 
@@ -25,26 +26,26 @@ let lastKnownRefresh: Date | null = null;
 
 // React to data changes from ANY source (header refresh, initial load, etc.)
 $effect(() => {
-  if (dataContext.state.initialized && dataContext.db) {
-    const currentRefresh = dataContext.state.lastRefresh;
-    const isNewRefresh = currentRefresh !== lastKnownRefresh;
+	if (dataContext.state.initialized && dataContext.db) {
+		const currentRefresh = dataContext.state.lastRefresh;
+		const isNewRefresh = currentRefresh !== lastKnownRefresh;
 
-    if (isNewRefresh) {
-      lastKnownRefresh = currentRefresh; // Update tracker (not reactive)
+		if (isNewRefresh) {
+			lastKnownRefresh = currentRefresh; // Update tracker (not reactive)
 
-      // Invalidate caches and reload all data from DuckDB
-      invalidateAllCaches();
-      currentPage = 1;
-      loadAllDashboardData();
-    }
-  }
+			// Invalidate caches and reload all data from DuckDB
+			invalidateAllCaches();
+			currentPage = 1;
+			loadAllDashboardData();
+		}
+	}
 });
 
 // Table refresh - just re-query DuckDB (fast, no network)
 function handleTableRefresh() {
-  invalidateAllCaches();
-  currentPage = 1;
-  loadAllDashboardData();
+	invalidateAllCaches();
+	currentPage = 1;
+	loadAllDashboardData();
 }
 ```
 
@@ -74,6 +75,7 @@ This follows Svelte 5 best practices - the effect reacts to external state chang
 ### Data Flow
 
 **Header Refresh (fetch new data):**
+
 ```
 Click header refresh
        ↓
@@ -93,6 +95,7 @@ UI updates with new data
 ```
 
 **Table Refresh (re-query existing data):**
+
 ```
 Click table refresh
        ↓
@@ -109,11 +112,11 @@ UI updates (same data, just refreshed)
 
 ### Multi-Level Caching
 
-| Level | Storage | TTL | When Invalidated |
-|-------|---------|-----|------------------|
-| Network/Storage | IndexedDB | 24 hours | Header refresh (forceRefresh) |
-| Query Cache | In-memory | 30 seconds | Any refresh (header or table) |
-| DuckDB | WASM memory | Session | Header refresh replaces table |
+| Level           | Storage     | TTL        | When Invalidated              |
+| --------------- | ----------- | ---------- | ----------------------------- |
+| Network/Storage | IndexedDB   | 24 hours   | Header refresh (forceRefresh) |
+| Query Cache     | In-memory   | 30 seconds | Any refresh (header or table) |
+| DuckDB          | WASM memory | Session    | Header refresh replaces table |
 
 ## Files Modified
 

@@ -1,6 +1,6 @@
 import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
 import type { DataError } from './types';
-import type { ParquetCacheService } from './cache';
+import type { DataCacheService } from './cache';
 import type { LoadResult } from './cache-types';
 
 /**
@@ -87,14 +87,14 @@ async function loadArrowBuffer(db: AsyncDuckDB, buffer: ArrayBuffer): Promise<nu
  *
  * @param db - DuckDB instance
  * @param url - URL to fetch Arrow data from
- * @param cacheService - Cache service instance (reuses parquet cache infrastructure)
+ * @param cacheService - Cache service instance for IndexedDB persistence
  * @param options - Load options
  * @returns LoadResult with cache metadata
  */
 export async function loadArrowWithCache(
 	db: AsyncDuckDB,
 	url: string,
-	cacheService: ParquetCacheService,
+	cacheService: DataCacheService,
 	options?: { forceRefresh?: boolean }
 ): Promise<LoadResult> {
 	// Load data from cache or network using the cache service

@@ -5,9 +5,9 @@
 The "Volume by Currency" KPI was summing raw `sell_amount_cents` across different currencies without conversion. This produced misleading results:
 
 | Currency | Raw Volume | Displayed % |
-|----------|-----------|-------------|
-| JPY | 77.3T | 84.6% |
-| EUR | 1.5T | 1.6% |
+| -------- | ---------- | ----------- |
+| JPY      | 77.3T      | 84.6%       |
+| EUR      | 1.5T       | 1.6%        |
 
 **The issue**: 77.3T JPY ≈ 465B EUR, so JPY's dominance was artificially inflated by ~166x due to exchange rate differences. Summing amounts in different currencies is like adding apples and oranges.
 
@@ -18,46 +18,48 @@ The backend now provides a `normalised_amount_cents` field on each order entry, 
 ### Backend Payload Examples
 
 **Order with EUR on one side:**
+
 ```json
 {
-  "id": "order-123",
-  "reference": "ORD-2024-001",
-  "fx_order_type": "spot",
-  "market_direction": "sell",
-  "buy_amount_cents": 602400,
-  "sell_amount_cents": 100000000,
-  "normalised_amount_cents": 602400,
-  "buy_currency": "EUR",
-  "sell_currency": "JPY",
-  "rate": 166.0,
-  "value_date": 20000,
-  "creation_date": 19950,
-  "execution_date": 19960,
-  "status": "completed",
-  "liquidity_provider": "SEB"
+	"id": "order-123",
+	"reference": "ORD-2024-001",
+	"fx_order_type": "spot",
+	"market_direction": "sell",
+	"buy_amount_cents": 602400,
+	"sell_amount_cents": 100000000,
+	"normalised_amount_cents": 602400,
+	"buy_currency": "EUR",
+	"sell_currency": "JPY",
+	"rate": 166.0,
+	"value_date": 20000,
+	"creation_date": 19950,
+	"execution_date": 19960,
+	"status": "completed",
+	"liquidity_provider": "SEB"
 }
 ```
 
 Interpretation: Sell 1,000,000 JPY → Buy 6,024 EUR. Normalised value = 6,024 EUR.
 
 **Order with no EUR on either side:**
+
 ```json
 {
-  "id": "order-456",
-  "reference": "ORD-2024-002",
-  "fx_order_type": "spot",
-  "market_direction": "sell",
-  "buy_amount_cents": 1350000,
-  "sell_amount_cents": 1000000,
-  "normalised_amount_cents": 925926,
-  "buy_currency": "CAD",
-  "sell_currency": "USD",
-  "rate": 1.35,
-  "value_date": 20010,
-  "creation_date": 19970,
-  "execution_date": 19975,
-  "status": "completed",
-  "liquidity_provider": "HSBC"
+	"id": "order-456",
+	"reference": "ORD-2024-002",
+	"fx_order_type": "spot",
+	"market_direction": "sell",
+	"buy_amount_cents": 1350000,
+	"sell_amount_cents": 1000000,
+	"normalised_amount_cents": 925926,
+	"buy_currency": "CAD",
+	"sell_currency": "USD",
+	"rate": 1.35,
+	"value_date": 20010,
+	"creation_date": 19970,
+	"execution_date": 19975,
+	"status": "completed",
+	"liquidity_provider": "HSBC"
 }
 ```
 
@@ -68,11 +70,11 @@ Interpretation: Sell 10,000 USD → Buy 13,500 CAD. At EUR/USD = 1.08, normalise
 After implementation, the KPI will show true EUR-equivalent volumes:
 
 | Currency | EUR Volume | True % |
-|----------|-----------|--------|
-| EUR | 1.5T € | ~42% |
-| JPY | 465B € | ~31% |
-| USD | 200B € | ~14% |
-| ... | ... | ... |
+| -------- | ---------- | ------ |
+| EUR      | 1.5T €     | ~42%   |
+| JPY      | 465B €     | ~31%   |
+| USD      | 200B €     | ~14%   |
+| ...      | ...        | ...    |
 
 This gives users meaningful insights into actual trading volume distribution.
 
@@ -117,17 +119,18 @@ This gives users meaningful insights into actual trading volume distribution.
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
+| File                      | Changes                                  |
+| ------------------------- | ---------------------------------------- |
 | `src/lib/types/orders.ts` | Add `normalisedAmountCents` to interface |
-| `src/lib/db/schema.ts` | Add column to CREATE TABLE statement |
-| `src/lib/db/loader.ts` | Map new field from API response |
-| `src/lib/db/queries.ts` | Update query and return type |
-| `src/routes/+page.svelte` | Update UI to use EUR volume |
+| `src/lib/db/schema.ts`    | Add column to CREATE TABLE statement     |
+| `src/lib/db/loader.ts`    | Map new field from API response          |
+| `src/lib/db/queries.ts`   | Update query and return type             |
+| `src/routes/+page.svelte` | Update UI to use EUR volume              |
 
 ## Rollback Plan
 
 If issues arise, the frontend can fall back to the previous behavior by:
+
 1. Using `sell_amount_cents` instead of `normalised_amount_cents` in queries
 2. Reverting UI labels
 

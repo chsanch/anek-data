@@ -18,7 +18,7 @@
 - **TypeScript 5.x** in strict mode
 - **Tailwind CSS 4** for styling
 - **DuckDB WASM** for in-browser SQL analytics
-- **idb** for IndexedDB cache (parquet file persistence)
+- **idb** for IndexedDB cache (Arrow data persistence)
 - **Vitest** for testing
 
 ## Svelte MCP Server
@@ -59,16 +59,18 @@ After completing the code, ask the user if they want a playground link. Only cal
 - **Don't update `$state` inside `$effect`** - This can cause infinite loops and is an anti-pattern
 - Use `$effect` for side effects only (DOM manipulation, network requests, analytics)
 - For tracking external state changes, use a **non-reactive tracker variable**:
+
   ```typescript
   let tracker: Date | null = null; // NOT $state!
 
   $effect(() => {
-    if (externalState.lastRefresh !== tracker) {
-      tracker = externalState.lastRefresh; // Update tracker (not reactive)
-      doSideEffect(); // Trigger side effects
-    }
+  	if (externalState.lastRefresh !== tracker) {
+  		tracker = externalState.lastRefresh; // Update tracker (not reactive)
+  		doSideEffect(); // Trigger side effects
+  	}
   });
   ```
+
 - Prefer `$derived` over `$effect` when computing values from other state
 
 ### TypeScript
@@ -117,42 +119,31 @@ src/
 
 ### Data Source
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PUBLIC_DATA_SOURCE` | Data source type: `'parquet'` or `'arrow'` | `'parquet'` |
-| `PUBLIC_PARQUET_URL` | URL to remote parquet file | - |
-| `PUBLIC_ARROW_URL` | URL to Arrow IPC stream endpoint | - |
+| Variable           | Description                      | Default |
+| ------------------ | -------------------------------- | ------- |
+| `PUBLIC_ARROW_URL` | URL to Arrow IPC stream endpoint | -       |
 
 ### Currency
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PUBLIC_CURRENCIES_URL` | URL to currencies endpoint (returns `[{code, minor_units}]`) | - |
+| Variable                | Description                                                  | Default |
+| ----------------------- | ------------------------------------------------------------ | ------- |
+| `PUBLIC_CURRENCIES_URL` | URL to currencies endpoint (returns `[{code, minor_units}]`) | -       |
 
 ### Cache
 
-| Variable | Description | Default |
-|----------|-------------|---------|
+| Variable           | Description                              | Default          |
+| ------------------ | ---------------------------------------- | ---------------- |
 | `PUBLIC_CACHE_TTL` | Cache TTL in milliseconds (0 to disable) | `86400000` (24h) |
-
-## Testing Local Parquet Server
-
-To test with a local parquet file, start a Python HTTP server:
-
-```bash
-cd /path/to/parquet/files && python3 -m http.server 8888
-```
-
-Then set `PUBLIC_PARQUET_URL=http://localhost:8888/orders.parquet` in `.env`
 
 ## Caching Architecture
 
-The application uses IndexedDB to cache data files (both Parquet and Arrow) for faster page loads:
+The application uses IndexedDB to cache Arrow IPC data for faster page loads:
 
-- **Cache Service**: `src/lib/db/cache.ts` - `ParquetCacheService` class handles all caching logic
+- **Cache Service**: `src/lib/db/cache.ts` - `DataCacheService` class handles all caching logic
 - **Cache Types**: `src/lib/db/cache-types.ts` - TypeScript interfaces for cache entities
 - **Cache Indicator**: `src/lib/components/CacheIndicator.svelte` - UI component showing cache status
 - **Arrow Loader**: `src/lib/db/arrow-loader.ts` - Loads Arrow IPC streams with cache support
+- **Schema Validation**: `src/lib/db/schema.ts` - Validates loaded data has expected columns
 
 ### Cache Features
 
@@ -175,17 +166,20 @@ The application uses IndexedDB to cache data files (both Parquet and Arrow) for 
 The application has a two-tier refresh system:
 
 ### Header Refresh (CacheIndicator)
+
 - Calls `dataContext.forceRefresh()` - fetches new data from server
 - Bypasses IndexedDB cache, always makes network request
 - Updates `dataContext.state.lastRefresh` when complete
 - Dashboard pages react via `$effect` watching `lastRefresh`
 
 ### Table/Component Refresh
+
 - Calls local `handleTableRefresh()` - re-queries DuckDB only
 - No network request, just invalidates query caches and reloads from existing DuckDB data
 - Fast, used for UI refreshes without fetching new server data
 
 ### Query Cache (In-Memory)
+
 - 30-second TTL for expensive DuckDB queries (stats, distributions, trends)
 - Invalidated on any refresh (header or table)
 - See `src/lib/utils/debounce.ts` for `QueryCache` class
@@ -201,10 +195,10 @@ The application supports proper currency formatting based on ISO 4217 minor unit
 ### Minor Units Examples
 
 | Currency | Minor Units | 1000 cents displays as |
-|----------|-------------|------------------------|
-| EUR, USD | 2 | 10.00 |
-| JPY | 0 | 1,000 |
-| KWD | 3 | 1.000 |
+| -------- | ----------- | ---------------------- |
+| EUR, USD | 2           | 10.00                  |
+| JPY      | 0           | 1,000                  |
+| KWD      | 3           | 1.000                  |
 
 The currency map is loaded from `PUBLIC_CURRENCIES_URL` on startup and available via `getDataContext().currencyMap`.
 
@@ -220,6 +214,7 @@ Order volumes are normalized to EUR for accurate cross-currency comparison:
 ### Why Normalize?
 
 Raw currency amounts are misleading (77T JPY ≠ 77T EUR). Normalizing to EUR allows:
+
 - Accurate volume comparison across currencies
 - Meaningful percentage breakdowns
 - Proper sorting by economic value
@@ -237,6 +232,8 @@ ORDER BY volume_eur DESC
 
 ## Recent Changes
 
+- 009-arrow-only: Removed Parquet support (Arrow-only architecture), renamed ParquetCacheService to DataCacheService, consolidated schema validation in DataProvider
+
 - 008-normalised-volume: EUR-normalized amounts for accurate cross-currency volume comparison, enhanced Volume by Currency KPI with percentages and thicker bars, schema validation for Arrow loads
 
 - 007-dashboard-kpi-phase2: Dashboard KPI improvements - sparklines for 7-day trends, Orders Today, Buy/Sell ratio visualization, Top LP insight, reactive data refresh with two-tier system
@@ -247,7 +244,7 @@ ORDER BY volume_eur DESC
 
 - 004-analytics-page: Added TypeScript 5.9 (strict mode) + SvelteKit 2.48, Svelte 5.43, Lightweight Charts (TradingView), DuckDB WASM 1.30, TanStack Table Core 8.21
 
-- 003-parquet-cache: Added browser data persistence with IndexedDB caching, ETag validation, cache status UI indicator
+- 003-data-cache: Added browser data persistence with IndexedDB caching, ETag validation, cache status UI indicator
 
 ## Active Technologies
 

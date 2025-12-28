@@ -8,11 +8,11 @@ The application stores monetary amounts as integers in cents (`buy_amount_cents`
 
 This approach breaks for currencies with different minor units:
 
-| Currency | Minor Units | Example |
-|----------|-------------|---------|
-| EUR, USD, GBP | 2 | 1000 cents → 10.00 |
-| JPY | 0 | 1000 cents → 1000 |
-| KWD | 3 | 1000 cents → 1.000 |
+| Currency      | Minor Units | Example            |
+| ------------- | ----------- | ------------------ |
+| EUR, USD, GBP | 2           | 1000 cents → 10.00 |
+| JPY           | 0           | 1000 cents → 1000  |
+| KWD           | 3           | 1000 cents → 1.000 |
 
 ## Data Source
 
@@ -20,15 +20,15 @@ A new `/currencies` endpoint provides currency metadata:
 
 ```json
 [
-  { "code": "EUR", "minor_units": 2 },
-  { "code": "USD", "minor_units": 2 },
-  { "code": "CHF", "minor_units": 2 },
-  { "code": "GBP", "minor_units": 2 },
-  { "code": "DKK", "minor_units": 2 },
-  { "code": "SEK", "minor_units": 2 },
-  { "code": "NOK", "minor_units": 2 },
-  { "code": "JPY", "minor_units": 0 },
-  { "code": "KWD", "minor_units": 3 }
+	{ "code": "EUR", "minor_units": 2 },
+	{ "code": "USD", "minor_units": 2 },
+	{ "code": "CHF", "minor_units": 2 },
+	{ "code": "GBP", "minor_units": 2 },
+	{ "code": "DKK", "minor_units": 2 },
+	{ "code": "SEK", "minor_units": 2 },
+	{ "code": "NOK", "minor_units": 2 },
+	{ "code": "JPY", "minor_units": 0 },
+	{ "code": "KWD", "minor_units": 3 }
 ]
 ```
 
@@ -38,20 +38,20 @@ Store currencies in DuckDB as a reference table while keeping amounts in cents. 
 
 ### Why This Approach?
 
-| Aspect | Benefit |
-|--------|---------|
-| **Precision** | Integer cents avoid floating-point errors |
-| **Aggregations** | `SUM(amount_cents)` is always accurate in SQL |
-| **Single source of truth** | Currencies table in DuckDB |
-| **Flexible formatting** | Can adapt to locale/display preferences |
+| Aspect                     | Benefit                                       |
+| -------------------------- | --------------------------------------------- |
+| **Precision**              | Integer cents avoid floating-point errors     |
+| **Aggregations**           | `SUM(amount_cents)` is always accurate in SQL |
+| **Single source of truth** | Currencies table in DuckDB                    |
+| **Flexible formatting**    | Can adapt to locale/display preferences       |
 
 ### Alternative Approaches Considered
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| Transform at render only | Simple, no data duplication | Need to pass currency map everywhere |
-| Store converted values in DB | Fast reads | Duplicates data, aggregation complexity |
-| **Hybrid (chosen)** | Best of both, accurate aggregations | Slightly more setup |
+| Approach                     | Pros                                | Cons                                    |
+| ---------------------------- | ----------------------------------- | --------------------------------------- |
+| Transform at render only     | Simple, no data duplication         | Need to pass currency map everywhere    |
+| Store converted values in DB | Fast reads                          | Duplicates data, aggregation complexity |
+| **Hybrid (chosen)**          | Best of both, accurate aggregations | Slightly more setup                     |
 
 ## Implementation Plan
 
@@ -61,8 +61,8 @@ Store currencies in DuckDB as a reference table while keeping amounts in cents. 
 
 ```typescript
 export interface Currency {
-  code: string;
-  minorUnits: number;
+	code: string;
+	minorUnits: number;
 }
 
 export type CurrencyMap = Map<string, Currency>;
@@ -76,43 +76,38 @@ export type CurrencyMap = Map<string, Currency>;
 import type { Currency, CurrencyMap } from '$lib/types/currency';
 import type { AsyncDuckDB } from '@duckdb/duckdb-wasm';
 
-export async function loadCurrencies(
-  db: AsyncDuckDB,
-  endpoint: string
-): Promise<CurrencyMap> {
-  // Fetch from API
-  const response = await fetch(endpoint);
-  const data = await response.json();
+export async function loadCurrencies(db: AsyncDuckDB, endpoint: string): Promise<CurrencyMap> {
+	// Fetch from API
+	const response = await fetch(endpoint);
+	const data = await response.json();
 
-  const currencies: Currency[] = data.map((c: { code: string; minor_units: number }) => ({
-    code: c.code,
-    minorUnits: c.minor_units
-  }));
+	const currencies: Currency[] = data.map((c: { code: string; minor_units: number }) => ({
+		code: c.code,
+		minorUnits: c.minor_units
+	}));
 
-  // Store in DuckDB for SQL JOINs
-  const conn = await db.connect();
-  try {
-    await conn.query(`
+	// Store in DuckDB for SQL JOINs
+	const conn = await db.connect();
+	try {
+		await conn.query(`
       CREATE TABLE IF NOT EXISTS currencies (
         code VARCHAR PRIMARY KEY,
         minor_units INTEGER NOT NULL
       )
     `);
 
-    // Clear and reload
-    await conn.query(`DELETE FROM currencies`);
+		// Clear and reload
+		await conn.query(`DELETE FROM currencies`);
 
-    for (const c of currencies) {
-      await conn.query(
-        `INSERT INTO currencies VALUES ('${c.code}', ${c.minorUnits})`
-      );
-    }
-  } finally {
-    await conn.close();
-  }
+		for (const c of currencies) {
+			await conn.query(`INSERT INTO currencies VALUES ('${c.code}', ${c.minorUnits})`);
+		}
+	} finally {
+		await conn.close();
+	}
 
-  // Return map for fast JS lookups
-  return new Map(currencies.map(c => [c.code, c]));
+	// Return map for fast JS lookups
+	return new Map(currencies.map((c) => [c.code, c]));
 }
 ```
 
@@ -133,20 +128,20 @@ import type { CurrencyMap } from '$lib/types/currency';
  * @returns Formatted currency string (e.g., "12,345.67" or "1,000")
  */
 export function formatCurrency(
-  cents: number,
-  currencyCode: string,
-  currencyMap: CurrencyMap,
-  locale: string = 'en-US'
+	cents: number,
+	currencyCode: string,
+	currencyMap: CurrencyMap,
+	locale: string = 'en-US'
 ): string {
-  const currency = currencyMap.get(currencyCode);
-  const minorUnits = currency?.minorUnits ?? 2; // Default to 2 if unknown
+	const currency = currencyMap.get(currencyCode);
+	const minorUnits = currency?.minorUnits ?? 2; // Default to 2 if unknown
 
-  const value = cents / Math.pow(10, minorUnits);
+	const value = cents / Math.pow(10, minorUnits);
 
-  return new Intl.NumberFormat(locale, {
-    minimumFractionDigits: minorUnits,
-    maximumFractionDigits: minorUnits
-  }).format(value);
+	return new Intl.NumberFormat(locale, {
+		minimumFractionDigits: minorUnits,
+		maximumFractionDigits: minorUnits
+	}).format(value);
 }
 
 /**
@@ -154,13 +149,13 @@ export function formatCurrency(
  * Useful for calculations or passing to charting libraries.
  */
 export function centsToValue(
-  cents: number,
-  currencyCode: string,
-  currencyMap: CurrencyMap
+	cents: number,
+	currencyCode: string,
+	currencyMap: CurrencyMap
 ): number {
-  const currency = currencyMap.get(currencyCode);
-  const minorUnits = currency?.minorUnits ?? 2;
-  return cents / Math.pow(10, minorUnits);
+	const currency = currencyMap.get(currencyCode);
+	const minorUnits = currency?.minorUnits ?? 2;
+	return cents / Math.pow(10, minorUnits);
 }
 ```
 
@@ -175,15 +170,15 @@ import type { CurrencyMap } from '$lib/types/currency';
 const CURRENCY_CONTEXT_KEY = Symbol('currency');
 
 export function setCurrencyContext(currencyMap: CurrencyMap): void {
-  setContext(CURRENCY_CONTEXT_KEY, currencyMap);
+	setContext(CURRENCY_CONTEXT_KEY, currencyMap);
 }
 
 export function getCurrencyContext(): CurrencyMap {
-  const ctx = getContext<CurrencyMap>(CURRENCY_CONTEXT_KEY);
-  if (!ctx) {
-    throw new Error('Currency context not found. Did you forget to call setCurrencyContext?');
-  }
-  return ctx;
+	const ctx = getContext<CurrencyMap>(CURRENCY_CONTEXT_KEY);
+	if (!ctx) {
+		throw new Error('Currency context not found. Did you forget to call setCurrencyContext?');
+	}
+	return ctx;
 }
 ```
 
@@ -215,24 +210,24 @@ JOIN currencies sc ON o.sell_currency = sc.code;
 
 ```svelte
 <script lang="ts">
-  import { getCurrencyContext } from '$lib/contexts/currency';
-  import { formatCurrency } from '$lib/utils/format';
+	import { getCurrencyContext } from '$lib/contexts/currency';
+	import { formatCurrency } from '$lib/utils/format';
 
-  const currencyMap = getCurrencyContext();
+	const currencyMap = getCurrencyContext();
 
-  interface Props {
-    order: {
-      buyAmountCents: number;
-      buyCurrency: string;
-    };
-  }
+	interface Props {
+		order: {
+			buyAmountCents: number;
+			buyCurrency: string;
+		};
+	}
 
-  let { order }: Props = $props();
+	let { order }: Props = $props();
 </script>
 
 <td class="cell-amount">
-  <span class="amount">{formatCurrency(order.buyAmountCents, order.buyCurrency, currencyMap)}</span>
-  <span class="currency">{order.buyCurrency}</span>
+	<span class="amount">{formatCurrency(order.buyAmountCents, order.buyCurrency, currencyMap)}</span>
+	<span class="currency">{order.buyCurrency}</span>
 </td>
 ```
 

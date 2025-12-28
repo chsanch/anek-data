@@ -3,18 +3,18 @@ import type {
 	CacheConfig,
 	CacheMetadata,
 	CacheStatus,
-	CachedParquet,
+	CachedData,
 	LoadResult,
-	ParquetCacheDB
+	DataCacheDB
 } from './cache-types';
 import { DEFAULT_CACHE_CONFIG, INITIAL_CACHE_STATUS } from './cache-types';
 
 /**
- * ParquetCacheService provides caching for parquet files using IndexedDB.
+ * DataCacheService provides caching for data files using IndexedDB.
  *
  * Usage:
  * ```typescript
- * const cache = new ParquetCacheService({ ttl: 3600000 });
+ * const cache = new DataCacheService({ ttl: 3600000 });
  * await cache.init();
  *
  * // Load data (from cache if valid, otherwise network)
@@ -24,8 +24,8 @@ import { DEFAULT_CACHE_CONFIG, INITIAL_CACHE_STATUS } from './cache-types';
  * const fresh = await cache.loadData(url, { forceRefresh: true });
  * ```
  */
-export class ParquetCacheService {
-	private db: IDBPDatabase<ParquetCacheDB> | null = null;
+export class DataCacheService {
+	private db: IDBPDatabase<DataCacheDB> | null = null;
 	private config: Required<CacheConfig>;
 	private status: CacheStatus = { ...INITIAL_CACHE_STATUS };
 
@@ -45,10 +45,16 @@ export class ParquetCacheService {
 		if (this.db) return;
 
 		try {
-			this.db = await openDB<ParquetCacheDB>(this.config.dbName, 1, {
+			this.db = await openDB<DataCacheDB>(this.config.dbName, 2, {
 				upgrade(db) {
-					if (!db.objectStoreNames.contains('parquet-cache')) {
-						db.createObjectStore('parquet-cache', { keyPath: 'url' });
+					// v2 migration: Delete legacy 'parquet-cache' store (data is incompatible with Arrow format)
+					// This intentionally resets the cache - users will re-fetch data on next load
+					const storeNames = db.objectStoreNames as DOMStringList;
+					if (storeNames.contains('parquet-cache')) {
+						db.deleteObjectStore('parquet-cache' as 'data-cache');
+					}
+					if (!storeNames.contains('data-cache')) {
+						db.createObjectStore('data-cache', { keyPath: 'url' });
 					}
 				}
 			});
@@ -65,7 +71,7 @@ export class ParquetCacheService {
 		if (!this.db) return false;
 
 		try {
-			const entry = await this.db.get('parquet-cache', url);
+			const entry = await this.db.get('data-cache', url);
 			if (!entry) return false;
 
 			const now = Date.now();
@@ -84,7 +90,7 @@ export class ParquetCacheService {
 		if (!this.db) return null;
 
 		try {
-			const entry = await this.db.get('parquet-cache', url);
+			const entry = await this.db.get('data-cache', url);
 			if (!entry) return null;
 
 			return {
@@ -118,12 +124,12 @@ export class ParquetCacheService {
 
 		this.updateStatus({ state: 'checking' });
 
-		let cachedEntry: CachedParquet | undefined;
+		let cachedEntry: CachedData | undefined;
 
 		// Check cache first (unless force refresh)
 		if (!forceRefresh && this.db) {
 			try {
-				const entry = await this.db.get('parquet-cache', url);
+				const entry = await this.db.get('data-cache', url);
 				if (entry) {
 					// Validate cache entry is not corrupted
 					if (!this.isValidCacheEntry(entry)) {
@@ -233,7 +239,7 @@ export class ParquetCacheService {
 			// Network failed - try to use stale cache as fallback
 			if (this.db) {
 				try {
-					const entry = cachedEntry || (await this.db.get('parquet-cache', url));
+					const entry = cachedEntry || (await this.db.get('data-cache', url));
 					if (entry) {
 						console.warn('Network failed, using stale cache:', error);
 						this.updateStatus({
@@ -270,16 +276,16 @@ export class ParquetCacheService {
 	 * Extend cache TTL without re-downloading data (used for 304 responses)
 	 * @internal
 	 */
-	private async extendCacheTTL(url: string, entry: CachedParquet): Promise<CacheMetadata> {
+	private async extendCacheTTL(url: string, entry: CachedData): Promise<CacheMetadata> {
 		const now = Date.now();
-		const updatedEntry: CachedParquet = {
+		const updatedEntry: CachedData = {
 			...entry,
 			expiresAt: now + this.config.ttl
 		};
 
 		if (this.db) {
 			try {
-				await this.db.put('parquet-cache', updatedEntry);
+				await this.db.put('data-cache', updatedEntry);
 			} catch (error) {
 				console.warn('Failed to extend cache TTL:', error);
 			}
@@ -301,7 +307,7 @@ export class ParquetCacheService {
 		if (!this.db) return;
 
 		try {
-			await this.db.delete('parquet-cache', url);
+			await this.db.delete('data-cache', url);
 		} catch (error) {
 			console.warn('Failed to clear cache:', error);
 		}
@@ -314,7 +320,7 @@ export class ParquetCacheService {
 		if (!this.db) return;
 
 		try {
-			await this.db.clear('parquet-cache');
+			await this.db.clear('data-cache');
 		} catch (error) {
 			console.warn('Failed to clear all cache:', error);
 		}
@@ -328,7 +334,7 @@ export class ParquetCacheService {
 	}
 
 	/**
-	 * Store parquet data in cache
+	 * Store data in cache
 	 * @internal
 	 */
 	private async storeCache(
@@ -337,7 +343,7 @@ export class ParquetCacheService {
 		etag: string | null = null
 	): Promise<CacheMetadata> {
 		const now = Date.now();
-		const entry: CachedParquet = {
+		const entry: CachedData = {
 			url,
 			data,
 			timestamp: now,
@@ -348,7 +354,7 @@ export class ParquetCacheService {
 
 		if (this.db) {
 			try {
-				await this.db.put('parquet-cache', entry);
+				await this.db.put('data-cache', entry);
 			} catch (error) {
 				// Handle storage quota exceeded
 				if (this.isQuotaExceededError(error)) {
@@ -391,7 +397,7 @@ export class ParquetCacheService {
 	 * Validate that cached data is not corrupted
 	 * @internal
 	 */
-	private isValidCacheEntry(entry: CachedParquet): boolean {
+	private isValidCacheEntry(entry: CachedData): boolean {
 		// Check that required fields exist
 		if (!entry.url || !entry.data || typeof entry.timestamp !== 'number') {
 			return false;

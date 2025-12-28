@@ -46,7 +46,11 @@ export function formatCurrency(
  * @param currencyMap - Map of currency codes to their metadata
  * @returns The actual currency value as a number
  */
-export function centsToValue(cents: number, currencyCode: string, currencyMap: CurrencyMap): number {
+export function centsToValue(
+	cents: number,
+	currencyCode: string,
+	currencyMap: CurrencyMap
+): number {
 	const currency = currencyMap.get(currencyCode);
 	const minorUnits = currency?.minorUnits ?? DEFAULT_MINOR_UNITS;
 	return cents / Math.pow(10, minorUnits);
