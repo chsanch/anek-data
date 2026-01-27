@@ -14,6 +14,8 @@ export interface UnifiedOrder {
 	executionDate: string | null;
 	status: 'open' | 'closed_to_trading' | 'completed';
 	liquidityProvider: string;
+	externalReference: string | null;
+	notes: string | null;
 }
 
 export interface Swap {

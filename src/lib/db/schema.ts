@@ -19,7 +19,9 @@ export const EXPECTED_COLUMNS = [
 	'creation_date',
 	'execution_date',
 	'status',
-	'liquidity_provider'
+	'liquidity_provider',
+	'external_reference',
+	'notes'
 ];
 
 /**

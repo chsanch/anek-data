@@ -9,6 +9,7 @@
 	import Skeleton from './Skeleton.svelte';
 	import EmptyState from './EmptyState.svelte';
 	import PageSizeSelector from './PageSizeSelector.svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	const { currencyMap } = getDataContext();
 
@@ -106,6 +107,22 @@
 				return 'type-spot';
 			default:
 				return '';
+		}
+	}
+
+	// Expandable row state
+	let expandedRows = new SvelteSet<string>();
+
+	function hasExtra(order: UnifiedOrder): boolean {
+		return order.externalReference !== null || order.notes !== null;
+	}
+
+	function toggleRow(order: UnifiedOrder) {
+		if (!hasExtra(order)) return;
+		if (expandedRows.has(order.id)) {
+			expandedRows.delete(order.id);
+		} else {
+			expandedRows.add(order.id);
 		}
 	}
 
@@ -213,8 +230,18 @@
 			{:else}
 				{#each table.getRowModel().rows as row (row.id)}
 					{@const order = row.original}
-					<tr>
-						<td class="cell-reference">{order.reference}</td>
+					{@const expandable = hasExtra(order)}
+					{@const expanded = expandedRows.has(order.id)}
+					<tr
+						class:row-expandable={expandable}
+						onclick={() => toggleRow(order)}
+					>
+						<td class="cell-reference">
+							{#if expandable}
+								<span class="expand-icon" class:expanded>{expanded ? '▼' : '▶'}</span>
+							{/if}
+							{order.reference}
+						</td>
 						<td>
 							<span class="badge {getTypeClass(order.fxOrderType)}">
 								{order.fxOrderType}
@@ -250,6 +277,26 @@
 						</td>
 						<td class="cell-lp">{order.liquidityProvider}</td>
 					</tr>
+					{#if expandable && expanded}
+						<tr class="expand-row">
+							<td colspan="9" class="expand-cell">
+								<div class="expand-content">
+									{#if order.externalReference}
+										<div class="expand-field">
+											<span class="expand-label">External Reference</span>
+											<span class="expand-value">{order.externalReference}</span>
+										</div>
+									{/if}
+									{#if order.notes}
+										<div class="expand-field">
+											<span class="expand-label">Notes</span>
+											<span class="expand-value">{order.notes}</span>
+										</div>
+									{/if}
+								</div>
+							</td>
+						</tr>
+					{/if}
 				{/each}
 			{/if}
 		</tbody>
@@ -516,6 +563,63 @@
 		font-family: 'IBM Plex Mono', monospace;
 		font-size: 12px;
 		color: var(--text-muted);
+	}
+
+	/* Expandable row styles */
+	.row-expandable {
+		cursor: pointer;
+	}
+
+	.expand-icon {
+		display: inline-block;
+		font-size: 9px;
+		margin-right: 6px;
+		color: var(--text-muted);
+		transition: color 0.15s ease;
+	}
+
+	.expand-icon.expanded {
+		color: var(--accent-primary);
+	}
+
+	.expand-row {
+		background: var(--bg-tertiary);
+	}
+
+	.expand-row:hover {
+		background: var(--bg-tertiary) !important;
+	}
+
+	.expand-cell {
+		padding: 0 16px 12px 16px !important;
+		border-bottom: 1px solid var(--border-primary);
+	}
+
+	.expand-content {
+		display: flex;
+		gap: 32px;
+		padding: 8px 12px;
+		font-size: 12px;
+	}
+
+	.expand-field {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.expand-label {
+		font-size: 10px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--text-muted);
+	}
+
+	.expand-value {
+		font-family: 'IBM Plex Mono', monospace;
+		font-size: 12px;
+		color: var(--text-secondary);
 	}
 
 	/* Pagination */

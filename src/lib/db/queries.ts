@@ -182,7 +182,9 @@ export async function getPaginatedOrders(
 				creation_date,
 				execution_date,
 				status,
-				liquidity_provider
+				liquidity_provider,
+				external_reference,
+				notes
 			FROM orders
 			${whereClause}
 			ORDER BY ${orderBy}
@@ -280,7 +282,9 @@ export async function getAllOrders(db: AsyncDuckDB): Promise<UnifiedOrder[]> {
 				creation_date,
 				execution_date,
 				status,
-				liquidity_provider
+				liquidity_provider,
+				external_reference,
+				notes
 			FROM orders
 			ORDER BY creation_date DESC, id DESC
 		`);
@@ -311,7 +315,9 @@ function mapRowToOrder(row: Record<string, unknown>): UnifiedOrder {
 		creationDate: formatDateFromDb(row.creation_date),
 		executionDate: row.execution_date ? formatDateFromDb(row.execution_date) : null,
 		status: String(row.status) as UnifiedOrder['status'],
-		liquidityProvider: String(row.liquidity_provider)
+		liquidityProvider: String(row.liquidity_provider),
+		externalReference: row.external_reference ? String(row.external_reference) : null,
+		notes: row.notes ? String(row.notes) : null
 	};
 }
 
@@ -626,7 +632,9 @@ export async function exportOrdersToCsv(
 				creation_date,
 				execution_date,
 				status,
-				liquidity_provider
+				liquidity_provider,
+				external_reference,
+				notes
 			FROM orders
 			${whereClause}
 			ORDER BY ${orderBy}
@@ -650,7 +658,9 @@ export async function exportOrdersToCsv(
 			'creation_date',
 			'execution_date',
 			'status',
-			'liquidity_provider'
+			'liquidity_provider',
+			'external_reference',
+			'notes'
 		];
 
 		// Date fields that need formatting

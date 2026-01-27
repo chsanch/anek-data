@@ -53,6 +53,7 @@ After completing the code, ask the user if they want a playground link. Only cal
 - Use `$props()` for component props
 - Use Svelte context API for sharing state across components (SSR-safe)
 - Avoid `onMount` for data fetching when possible; prefer load functions or context
+- **Use `SvelteSet`/`SvelteMap` for reactive collections** - Import from `svelte/reactivity`. Do **not** wrap `Set`/`Map` in `$state()`; `SvelteSet`/`SvelteMap` provide fine-grained reactivity on mutations (add/delete) without reassignment.
 
 ### $effect Best Practices
 
